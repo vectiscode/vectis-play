@@ -1,0 +1,664 @@
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Vectis Play" Width="980" Height="680" MinWidth="820" MinHeight="580"
+        WindowStartupLocation="CenterScreen" UseLayoutRounding="True" SnapsToDevicePixels="True"
+        Background="#0F0E0D" Foreground="#F2ECE6" FontFamily="Segoe UI, Bahnschrift" FontSize="14"
+        TextOptions.TextFormattingMode="Display">
+  <Window.Resources>
+    <!-- Palette: charcoal ink, warm paper text, one coral signal accent -->
+    <SolidColorBrush x:Key="Ink" Color="#0F0E0D"/>
+    <SolidColorBrush x:Key="Rail" Color="#131110"/>
+    <SolidColorBrush x:Key="Panel" Color="#181513"/>
+    <SolidColorBrush x:Key="Field" Color="#14110F"/>
+    <SolidColorBrush x:Key="Line" Color="#2B2724"/>
+    <SolidColorBrush x:Key="Line2" Color="#463F39"/>
+    <SolidColorBrush x:Key="Paper" Color="#F2ECE6"/>
+    <SolidColorBrush x:Key="Muted" Color="#A89F98"/>
+    <SolidColorBrush x:Key="Signal" Color="#FF5B4B"/>
+    <SolidColorBrush x:Key="SignalDeep" Color="#D1281F"/>
+    <SolidColorBrush x:Key="SignalInk" Color="#160805"/>
+    <SolidColorBrush x:Key="FocusRing" Color="#FFC9BF"/>
+    <FontFamily x:Key="Display">Bahnschrift, Segoe UI</FontFamily>
+    <FontFamily x:Key="Mono">Consolas</FontFamily>
+
+    <!-- Text roles -->
+    <Style x:Key="Eyebrow" TargetType="TextBlock">
+      <Setter Property="FontFamily" Value="{StaticResource Mono}"/>
+      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="Foreground" Value="{StaticResource Signal}"/>
+    </Style>
+    <Style x:Key="PageTitle" TargetType="TextBlock">
+      <Setter Property="FontFamily" Value="{StaticResource Display}"/>
+      <Setter Property="FontStretch" Value="SemiCondensed"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="FontSize" Value="32"/>
+      <Setter Property="Foreground" Value="{StaticResource Paper}"/>
+    </Style>
+    <Style x:Key="FieldLabel" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="14"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Foreground" Value="{StaticResource Paper}"/>
+    </Style>
+    <Style x:Key="FieldHint" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="Foreground" Value="{StaticResource Muted}"/>
+      <Setter Property="TextWrapping" Value="Wrap"/>
+      <Setter Property="Margin" Value="0,2,16,0"/>
+    </Style>
+    <Style x:Key="Unit" TargetType="TextBlock">
+      <Setter Property="FontFamily" Value="{StaticResource Mono}"/>
+      <Setter Property="FontSize" Value="13"/>
+      <Setter Property="Foreground" Value="{StaticResource Muted}"/>
+      <Setter Property="VerticalAlignment" Value="Center"/>
+      <Setter Property="IsHitTestVisible" Value="False"/>
+    </Style>
+    <Style x:Key="Margin" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="13"/>
+      <Setter Property="Foreground" Value="{StaticResource Muted}"/>
+      <Setter Property="TextWrapping" Value="Wrap"/>
+      <Setter Property="LineHeight" Value="19"/>
+    </Style>
+
+    <!-- Buttons: ghost by default, Accent for the one primary action -->
+    <Style TargetType="Button">
+      <Setter Property="Foreground" Value="{StaticResource Paper}"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="Face" MinWidth="104" Height="38" CornerRadius="2" Background="#1E1A17" BorderBrush="{StaticResource Line2}" BorderThickness="1" Padding="18,0">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True" TextElement.Foreground="{TemplateBinding Foreground}"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Face" Property="Background" Value="#2A2420"/></Trigger>
+              <Trigger Property="IsPressed" Value="True"><Setter TargetName="Face" Property="Background" Value="#120F0D"/></Trigger>
+              <Trigger Property="IsKeyboardFocused" Value="True">
+                <Setter TargetName="Face" Property="BorderBrush" Value="{StaticResource FocusRing}"/>
+                <Setter TargetName="Face" Property="BorderThickness" Value="2"/>
+                <Setter TargetName="Face" Property="Padding" Value="17,0"/>
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter TargetName="Face" Property="Opacity" Value="0.4"/>
+                <Setter Property="Cursor" Value="Arrow"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style x:Key="Accent" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+      <Setter Property="Foreground" Value="{StaticResource SignalInk}"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="Face" MinWidth="104" Height="38" CornerRadius="2" Background="{StaticResource Signal}" BorderBrush="{StaticResource Signal}" BorderThickness="1" Padding="18,0">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True" TextElement.Foreground="{TemplateBinding Foreground}"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Face" Property="Background" Value="#FF7466"/></Trigger>
+              <Trigger Property="IsPressed" Value="True"><Setter TargetName="Face" Property="Background" Value="#E04A3B"/></Trigger>
+              <Trigger Property="IsKeyboardFocused" Value="True">
+                <Setter TargetName="Face" Property="BorderBrush" Value="{StaticResource Paper}"/>
+                <Setter TargetName="Face" Property="BorderThickness" Value="2"/>
+                <Setter TargetName="Face" Property="Padding" Value="17,0"/>
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Foreground" Value="{StaticResource Muted}"/>
+                <Setter TargetName="Face" Property="Background" Value="{StaticResource Field}"/>
+                <Setter TargetName="Face" Property="BorderBrush" Value="{StaticResource Line}"/>
+                <Setter Property="Cursor" Value="Arrow"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- TextBox -->
+    <Style TargetType="TextBox">
+      <Setter Property="Foreground" Value="{StaticResource Paper}"/>
+      <Setter Property="CaretBrush" Value="{StaticResource Signal}"/>
+      <Setter Property="SelectionBrush" Value="{StaticResource Signal}"/>
+      <Setter Property="FontFamily" Value="{StaticResource Mono}"/>
+      <Setter Property="FontSize" Value="15"/>
+      <Setter Property="Height" Value="36"/>
+      <Setter Property="Padding" Value="11,0"/>
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="TextBox">
+            <Border x:Name="Frame" Background="{StaticResource Field}" BorderBrush="{StaticResource Line2}" BorderThickness="1" CornerRadius="2">
+              <ScrollViewer x:Name="PART_ContentHost" Padding="{TemplateBinding Padding}" VerticalAlignment="Center" Focusable="False" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Frame" Property="BorderBrush" Value="#6A6058"/></Trigger>
+              <Trigger Property="Tag" Value="changed"><Setter TargetName="Frame" Property="BorderBrush" Value="{StaticResource Signal}"/></Trigger>
+              <Trigger Property="IsKeyboardFocused" Value="True">
+                <Setter TargetName="Frame" Property="BorderBrush" Value="{StaticResource FocusRing}"/>
+                <Setter TargetName="Frame" Property="BorderThickness" Value="2"/>
+                <Setter TargetName="Frame" Property="Background" Value="#1B1613"/>
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False"><Setter TargetName="Frame" Property="Opacity" Value="0.45"/></Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- ComboBox -->
+    <Style TargetType="ComboBoxItem">
+      <Setter Property="Foreground" Value="{StaticResource Paper}"/>
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ComboBoxItem">
+            <Border x:Name="Row" Height="34" Padding="12,0" Background="Transparent" BorderThickness="3,0,0,0" BorderBrush="Transparent">
+              <ContentPresenter VerticalAlignment="Center" TextElement.Foreground="{TemplateBinding Foreground}"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsHighlighted" Value="True"><Setter TargetName="Row" Property="Background" Value="#2A2420"/></Trigger>
+              <Trigger Property="IsSelected" Value="True">
+                <Setter TargetName="Row" Property="BorderBrush" Value="{StaticResource Signal}"/>
+                <Setter TargetName="Row" Property="Background" Value="#241D1A"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style TargetType="ComboBox">
+      <Setter Property="Foreground" Value="{StaticResource Paper}"/>
+      <Setter Property="FontSize" Value="14"/>
+      <Setter Property="Height" Value="36"/>
+      <Setter Property="MaxDropDownHeight" Value="280"/>
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+      <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ComboBox">
+            <Grid>
+              <Border x:Name="Frame" Background="{StaticResource Field}" BorderBrush="{StaticResource Line2}" BorderThickness="1" CornerRadius="2"/>
+              <ToggleButton Focusable="False" ClickMode="Press" Background="Transparent" IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                <ToggleButton.Template>
+                  <ControlTemplate TargetType="ToggleButton">
+                    <Grid Background="Transparent">
+                      <Path HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,13,0" Data="M0 0L5 5L10 0" Stroke="{StaticResource Muted}" StrokeThickness="1.6" StrokeLineJoin="Round"/>
+                    </Grid>
+                  </ControlTemplate>
+                </ToggleButton.Template>
+              </ToggleButton>
+              <ContentPresenter IsHitTestVisible="False" Margin="12,0,34,0" VerticalAlignment="Center" HorizontalAlignment="Left" Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" ContentStringFormat="{TemplateBinding SelectionBoxItemStringFormat}" TextElement.Foreground="{TemplateBinding Foreground}"/>
+              <Popup x:Name="PART_Popup" Placement="Bottom" AllowsTransparency="True" Focusable="False" PopupAnimation="Fade" IsOpen="{TemplateBinding IsDropDownOpen}">
+                <Border MinWidth="{Binding ActualWidth, ElementName=Frame}" MaxHeight="{TemplateBinding MaxDropDownHeight}" Margin="0,2,10,12" Background="#1B1816" BorderBrush="{StaticResource Line2}" BorderThickness="1" CornerRadius="2" SnapsToDevicePixels="True">
+                  <Border.Effect><DropShadowEffect BlurRadius="14" ShadowDepth="4" Opacity="0.55" Color="#000000"/></Border.Effect>
+                  <ScrollViewer CanContentScroll="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained"/>
+                  </ScrollViewer>
+                </Border>
+              </Popup>
+            </Grid>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Frame" Property="BorderBrush" Value="#6A6058"/></Trigger>
+              <Trigger Property="Tag" Value="changed"><Setter TargetName="Frame" Property="BorderBrush" Value="{StaticResource Signal}"/></Trigger>
+              <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                <Setter TargetName="Frame" Property="BorderBrush" Value="{StaticResource FocusRing}"/>
+                <Setter TargetName="Frame" Property="BorderThickness" Value="2"/>
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False"><Setter TargetName="Frame" Property="Opacity" Value="0.45"/></Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- CheckBox -->
+    <Style TargetType="CheckBox">
+      <Setter Property="Foreground" Value="{StaticResource Paper}"/>
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="CheckBox">
+            <StackPanel Orientation="Horizontal" Background="Transparent">
+              <Border x:Name="Box" Width="22" Height="22" Background="{StaticResource Field}" BorderBrush="{StaticResource Line2}" BorderThickness="1" CornerRadius="2" VerticalAlignment="Center">
+                <Path x:Name="Tick" Visibility="Collapsed" Data="M4 11L9 16L18 5" Stroke="{StaticResource Signal}" StrokeThickness="2.4" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+              </Border>
+              <ContentPresenter Margin="10,0,0,0" VerticalAlignment="Center" RecognizesAccessKey="True" TextElement.Foreground="{TemplateBinding Foreground}"/>
+            </StackPanel>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsChecked" Value="True"><Setter TargetName="Tick" Property="Visibility" Value="Visible"/><Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource Signal}"/></Trigger>
+              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Box" Property="Background" Value="#241D1A"/></Trigger>
+              <Trigger Property="Tag" Value="changed"><Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource Signal}"/></Trigger>
+              <Trigger Property="IsKeyboardFocused" Value="True">
+                <Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource FocusRing}"/>
+                <Setter TargetName="Box" Property="BorderThickness" Value="2"/>
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.45"/></Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- Slider: 4px track, signal fill up to the thumb, ring on keyboard focus -->
+    <Style TargetType="Slider">
+      <Setter Property="Height" Value="22"/>
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Slider">
+            <Grid>
+              <Border Height="4" VerticalAlignment="Center" Background="{StaticResource Line2}" CornerRadius="2"/>
+              <Track x:Name="PART_Track" IsDirectionReversed="False">
+                <Track.DecreaseRepeatButton>
+                  <RepeatButton Command="Slider.DecreaseLarge" Focusable="False" IsTabStop="False">
+                    <RepeatButton.Template>
+                      <ControlTemplate TargetType="RepeatButton">
+                        <Border Height="4" VerticalAlignment="Center" Background="{StaticResource Signal}" CornerRadius="2"/>
+                      </ControlTemplate>
+                    </RepeatButton.Template>
+                  </RepeatButton>
+                </Track.DecreaseRepeatButton>
+                <Track.IncreaseRepeatButton>
+                  <RepeatButton Command="Slider.IncreaseLarge" Focusable="False" IsTabStop="False">
+                    <RepeatButton.Template>
+                      <ControlTemplate TargetType="RepeatButton">
+                        <Border Background="Transparent"/>
+                      </ControlTemplate>
+                    </RepeatButton.Template>
+                  </RepeatButton>
+                </Track.IncreaseRepeatButton>
+                <Track.Thumb>
+                  <Thumb>
+                    <Thumb.Template>
+                      <ControlTemplate TargetType="Thumb">
+                        <Border Padding="4">
+                          <Border x:Name="Knob" Width="14" Height="14" CornerRadius="7" Background="{StaticResource Paper}" BorderBrush="{StaticResource Signal}" BorderThickness="1.5"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                          <DataTrigger Binding="{Binding IsKeyboardFocused, RelativeSource={RelativeSource AncestorType=Slider}}" Value="True">
+                            <Setter TargetName="Knob" Property="BorderBrush" Value="{StaticResource FocusRing}"/>
+                            <Setter TargetName="Knob" Property="BorderThickness" Value="2"/>
+                          </DataTrigger>
+                        </ControlTemplate.Triggers>
+                      </ControlTemplate>
+                    </Thumb.Template>
+                  </Thumb>
+                </Track.Thumb>
+              </Track>
+            </Grid>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.4"/></Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- Slim vertical scrollbar -->
+    <Style x:Key="PageButton" TargetType="RepeatButton">
+      <Setter Property="Focusable" Value="False"/>
+      <Setter Property="IsTabStop" Value="False"/>
+      <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="RepeatButton"><Border Background="Transparent"/></ControlTemplate></Setter.Value></Setter>
+    </Style>
+    <Style TargetType="ScrollBar">
+      <Setter Property="Width" Value="10"/>
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ScrollBar">
+            <Grid Background="Transparent">
+              <Track x:Name="PART_Track" IsDirectionReversed="True">
+                <Track.DecreaseRepeatButton><RepeatButton Style="{StaticResource PageButton}" Command="ScrollBar.PageUpCommand"/></Track.DecreaseRepeatButton>
+                <Track.IncreaseRepeatButton><RepeatButton Style="{StaticResource PageButton}" Command="ScrollBar.PageDownCommand"/></Track.IncreaseRepeatButton>
+                <Track.Thumb>
+                  <Thumb>
+                    <Thumb.Template><ControlTemplate TargetType="Thumb"><Border Margin="2,0" Background="#4A423C" CornerRadius="3"/></ControlTemplate></Thumb.Template>
+                  </Thumb>
+                </Track.Thumb>
+              </Track>
+            </Grid>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- Left rail: TabControl restyled as a sidebar, brand mark inside the template -->
+    <Style TargetType="TabItem">
+      <Setter Property="Foreground" Value="{StaticResource Muted}"/>
+      <Setter Property="FontFamily" Value="{StaticResource Display}"/>
+      <Setter Property="FontSize" Value="17"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="TabItem">
+            <Border x:Name="Row" Height="48" Background="Transparent" BorderThickness="0,0,0,0" BorderBrush="Transparent">
+              <Grid>
+                <Border x:Name="Bar" Width="3" HorizontalAlignment="Left" Background="{StaticResource Signal}" Visibility="Hidden"/>
+                <Border x:Name="Ring" BorderThickness="2" BorderBrush="Transparent" Margin="6,2,4,2" CornerRadius="2"/>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="26,0,0,0">
+                  <TextBlock Text="{TemplateBinding Tag}" FontFamily="Consolas" FontSize="12" FontWeight="Normal" Foreground="{StaticResource Signal}" Width="30" VerticalAlignment="Center"/>
+                  <ContentPresenter ContentSource="Header" VerticalAlignment="Center" RecognizesAccessKey="True" TextElement.Foreground="{TemplateBinding Foreground}"/>
+                </StackPanel>
+              </Grid>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Row" Property="Background" Value="#1A1715"/></Trigger>
+              <Trigger Property="IsSelected" Value="True">
+                <Setter TargetName="Row" Property="Background" Value="#211C19"/>
+                <Setter TargetName="Bar" Property="Visibility" Value="Visible"/>
+              </Trigger>
+              <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Ring" Property="BorderBrush" Value="{StaticResource FocusRing}"/></Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+      <Style.Triggers>
+        <Trigger Property="IsSelected" Value="True"><Setter Property="Foreground" Value="{StaticResource Paper}"/></Trigger>
+        <Trigger Property="IsMouseOver" Value="True"><Setter Property="Foreground" Value="{StaticResource Paper}"/></Trigger>
+      </Style.Triggers>
+    </Style>
+    <Style TargetType="TabControl">
+      <Setter Property="Background" Value="{StaticResource Ink}"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="Padding" Value="0"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="TabControl">
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="224"/>
+                <ColumnDefinition Width="*"/>
+              </Grid.ColumnDefinitions>
+              <Border Grid.Column="0" Background="{StaticResource Rail}" BorderBrush="{StaticResource Line}" BorderThickness="0,0,1,0">
+                <DockPanel LastChildFill="False">
+                  <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="26,30,0,34">
+                    <Viewbox Width="30" Height="30" Stretch="Uniform">
+                      <Canvas Width="760" Height="760">
+                        <Canvas.RenderTransform><TranslateTransform X="-118" Y="-192"/></Canvas.RenderTransform>
+                        <Path Fill="#F2ECE6" Data="M143 210H335C398 210 438 248 458 322C492 450 532 680 566 830L518 935Z"/>
+                        <Path Fill="#D1281F" Data="M680 210H853L566 830C546 750 544 610 562 470C580 330 606 210 680 210Z"/>
+                        <Path Fill="#99251E" Data="M853 210C730 340 600 500 558 720L566 830Z"/>
+                      </Canvas>
+                    </Viewbox>
+                    <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                      <TextBlock Text="Vectis Play" FontFamily="{StaticResource Display}" FontStretch="SemiCondensed" FontWeight="SemiBold" FontSize="21" Foreground="{StaticResource Paper}"/>
+                      <TextBlock Text="PS5 REMOTE PLAY" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Muted}"/>
+                    </StackPanel>
+                  </StackPanel>
+                  <StackPanel IsItemsHost="True" DockPanel.Dock="Top" KeyboardNavigation.TabNavigation="Once"/>
+                  <StackPanel DockPanel.Dock="Bottom" Margin="26,0,0,26" HorizontalAlignment="Left">
+                    <TextBlock Text="chiaki-ng 1.10.1" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Muted}"/>
+                    <TextBlock Text="AGPL-3.0" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Muted}"/>
+                  </StackPanel>
+                </DockPanel>
+              </Border>
+              <ContentPresenter Grid.Column="1" ContentSource="SelectedContent" Margin="0,0,0,76"/>
+            </Grid>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+  </Window.Resources>
+
+  <Grid>
+    <TabControl x:Name="Pages" TabStripPlacement="Left">
+
+      <!-- 01 SESSION -->
+      <TabItem Header="Session" Tag="01">
+        <Grid Margin="40,30,40,16">
+          <Grid.RowDefinitions>
+            <RowDefinition Height="170"/>
+            <RowDefinition Height="Auto"/>
+          </Grid.RowDefinitions>
+          <Border Grid.Row="0" Background="#141211" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="3" Margin="0,0,0,22" ClipToBounds="True">
+            <Viewbox Stretch="Uniform" Margin="14,10">
+              <Canvas Width="880" Height="262">
+                <!-- hairline field -->
+                <Path Stroke="#221E1B" StrokeThickness="1" Data="M0 40H880M0 85H880M0 130H880M0 175H880M0 220H880"/>
+                <!-- console shell -->
+                <Path Stroke="#F2ECE6" StrokeThickness="3" StrokeLineJoin="Round" Data="M64 238V44Q64 24 84 24H112Q168 86 168 130Q168 174 112 236H84Q64 236 64 238Z"/>
+                <Path Stroke="#FF5B4B" StrokeThickness="2" Data="M96 24Q146 84 146 130Q146 176 96 236"/>
+                <Ellipse Canvas.Left="102" Canvas.Top="126" Width="8" Height="8" Fill="#FF5B4B"/>
+                <!-- outer spread, not the main path -->
+                <Path Stroke="#2E2824" StrokeThickness="1.5" StrokeDashArray="1 7" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Data="M168 130C290 130 340 40 470 40S610 130 660 130"/>
+                <Path Stroke="#2E2824" StrokeThickness="1.5" StrokeDashArray="1 7" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Data="M168 130C290 130 340 220 470 220S610 130 660 130"/>
+                <Path Stroke="#5A4F48" StrokeThickness="1.5" StrokeDashArray="2 8" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Data="M168 130C300 130 360 74 470 74S600 130 660 130"/>
+                <Path Stroke="#5A4F48" StrokeThickness="1.5" StrokeDashArray="2 8" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Data="M168 130C300 130 360 186 470 186S600 130 660 130"/>
+                <!-- main direct line -->
+                <Path Stroke="#FF5B4B" StrokeThickness="3" Data="M168 130H660"/>
+                <Path Stroke="#FF5B4B" StrokeThickness="2" Opacity="0.55" Data="M212 120V140M252 124V136M292 120V140M332 124V136M372 120V140M412 124V136M452 120V140M492 124V136M532 120V140M572 124V136M612 120V140"/>
+                <Ellipse Canvas.Left="161" Canvas.Top="123" Width="14" Height="14" Fill="#0F0E0D" Stroke="#FF5B4B" StrokeThickness="2.5"/>
+                <Ellipse Canvas.Left="653" Canvas.Top="123" Width="14" Height="14" Fill="#FF5B4B"/>
+                <!-- screen -->
+                <Path Stroke="#F2ECE6" StrokeThickness="3" StrokeLineJoin="Round" Data="M670 60H826Q836 60 836 70V190Q836 200 826 200H670Q660 200 660 190V70Q660 60 670 60Z"/>
+                <Path Stroke="#3E3731" StrokeThickness="1.5" Data="M674 74H822V186H674Z"/>
+                <Path Stroke="#F2ECE6" StrokeThickness="3" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Data="M748 200V226M712 228H784"/>
+                <Canvas>
+                  <Canvas.RenderTransform><MatrixTransform Matrix="0.11,0,0,0.11,693.2,67.1"/></Canvas.RenderTransform>
+                  <Path Fill="#F2ECE6" Data="M143 210H335C398 210 438 248 458 322C492 450 532 680 566 830L518 935Z"/>
+                  <Path Fill="#D1281F" Data="M680 210H853L566 830C546 750 544 610 562 470C580 330 606 210 680 210Z"/>
+                  <Path Fill="#99251E" Data="M853 210C730 340 600 500 558 720L566 830Z"/>
+                </Canvas>
+                <!-- crop marks -->
+                <Path Stroke="#5A4F48" StrokeThickness="1.5" Data="M640 44V32H652M844 32H856V44M856 216V228H844M652 228H640V216"/>
+                <TextBlock Canvas.Left="64" Canvas.Top="242" Text="CONSOLE" FontFamily="Consolas" FontSize="15" Foreground="#A89F98"/>
+                <TextBlock Canvas.Left="384" Canvas.Top="144" Text="NETWORK" FontFamily="Consolas" FontSize="15" Foreground="#A89F98"/>
+                <TextBlock Canvas.Left="696" Canvas.Top="236" Text="DISPLAY" FontFamily="Consolas" FontSize="15" Foreground="#A89F98"/>
+              </Canvas>
+            </Viewbox>
+          </Border>
+          <StackPanel Grid.Row="1">
+            <TextBlock Style="{StaticResource Eyebrow}" Text="SESSION"/>
+            <TextBlock x:Name="SessionTitle" Style="{StaticResource PageTitle}" Text="Pair your PS5" Margin="0,2,0,6" TextWrapping="Wrap"/>
+            <TextBlock x:Name="SessionDetail" Style="{StaticResource Margin}" Text="Keep the console awake on the same network as this PC." Margin="0,0,0,16"/>
+            <ComboBox x:Name="ConsoleList" Visibility="Collapsed" Margin="0,0,0,14" MaxWidth="420" HorizontalAlignment="Left" Width="420" AutomationProperties.Name="Console"/>
+            <WrapPanel>
+              <Button x:Name="Primary" Style="{StaticResource Accent}" Content="Pair PS5" Margin="0,0,10,8" MinWidth="150"/>
+              <Button x:Name="Manage" Content="Manage" Visibility="Collapsed" Margin="0,0,10,8"/>
+              <Button x:Name="NativeSettings" Content="Controller and native settings" Margin="0,0,10,8"/>
+            </WrapPanel>
+            <StackPanel Margin="0,20,0,0">
+              <TextBlock Text="SAVED PROFILE" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Muted}"/>
+              <UniformGrid Columns="3" Margin="0,10,0,0">
+                <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="3" Padding="12,9" Margin="0,0,10,10">
+                  <StackPanel>
+                    <TextBlock Text="RESOLUTION" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Muted}"/>
+                    <TextBlock x:Name="SumResolution" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource Paper}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                  </StackPanel>
+                </Border>
+                <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="3" Padding="12,9" Margin="0,0,10,10">
+                  <StackPanel>
+                    <TextBlock Text="FRAME RATE" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Muted}"/>
+                    <TextBlock x:Name="SumRate" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource Paper}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                  </StackPanel>
+                </Border>
+                <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="3" Padding="12,9" Margin="0,0,10,10">
+                  <StackPanel>
+                    <TextBlock Text="BITRATE" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Muted}"/>
+                    <TextBlock x:Name="SumBitrate" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource Paper}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                  </StackPanel>
+                </Border>
+                <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="3" Padding="12,9" Margin="0,0,10,10">
+                  <StackPanel>
+                    <TextBlock Text="DECODER" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Muted}"/>
+                    <TextBlock x:Name="SumDecoder" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource Paper}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                  </StackPanel>
+                </Border>
+                <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="3" Padding="12,9" Margin="0,0,10,10">
+                  <StackPanel>
+                    <TextBlock Text="SCALING" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Muted}"/>
+                    <TextBlock x:Name="SumScaling" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource Paper}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                  </StackPanel>
+                </Border>
+                <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="3" Padding="12,9" Margin="0,0,10,10">
+                  <StackPanel>
+                    <TextBlock Text="AUDIO BUFFER" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Muted}"/>
+                    <TextBlock x:Name="SumBuffer" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource Paper}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                  </StackPanel>
+                </Border>
+              </UniformGrid>
+            </StackPanel>
+          </StackPanel>
+        </Grid>
+      </TabItem>
+
+      <!-- 02 STREAM -->
+      <TabItem Header="Stream" Tag="02">
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
+          <StackPanel Margin="40,32,34,20" MaxWidth="680" HorizontalAlignment="Left">
+            <Grid Margin="0,0,0,26">
+              <StackPanel>
+                <TextBlock Style="{StaticResource Eyebrow}" Text="STREAM"/>
+                <TextBlock Style="{StaticResource PageTitle}" Text="What leaves the console" Margin="0,2,0,0"/>
+              </StackPanel>
+              <Path HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,6,0" Stroke="#FF5B4B" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Data="M0 20H14L20 4L30 36L38 12L44 20H80" Width="80" Height="40" Stretch="None"/>
+            </Grid>
+            <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="4" Padding="22,18">
+              <StackPanel>
+                <Grid Margin="0,0,0,18">
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Resolution"/><TextBlock Style="{StaticResource FieldHint}" Text="Output height in pixels."/></StackPanel>
+                  <ComboBox x:Name="Resolution" Grid.Column="1" Width="260" HorizontalAlignment="Left" VerticalAlignment="Top" AutomationProperties.Name="Resolution"/>
+                </Grid>
+                <Grid Margin="0,0,0,18">
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Frame rate"/><TextBlock Style="{StaticResource FieldHint}" Text="Frames per second."/></StackPanel>
+                  <ComboBox x:Name="Rate" Grid.Column="1" Width="260" HorizontalAlignment="Left" VerticalAlignment="Top" AutomationProperties.Name="Frame rate"/>
+                </Grid>
+                <Grid Margin="0,0,0,18">
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Codec"/><TextBlock Style="{StaticResource FieldHint}" Text="Video encoding sent by the PS5."/></StackPanel>
+                  <ComboBox x:Name="Codec" Grid.Column="1" Width="260" HorizontalAlignment="Left" VerticalAlignment="Top" AutomationProperties.Name="Codec"/>
+                </Grid>
+                <Grid>
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Bitrate"/><TextBlock Style="{StaticResource FieldHint}" Text="0 uses the resolution's default bitrate."/></StackPanel>
+                  <StackPanel Grid.Column="1" Width="260" HorizontalAlignment="Left" VerticalAlignment="Top">
+                    <Grid>
+                      <TextBox x:Name="Bitrate" Padding="11,0,56,0" AutomationProperties.Name="Bitrate in kilobits per second"/>
+                      <TextBlock Style="{StaticResource Unit}" Text="kbps" HorizontalAlignment="Right" Margin="0,0,13,0"/>
+                    </Grid>
+                    <Slider x:Name="BitrateSlider" Margin="0,10,0,0" Minimum="0" Maximum="60000" TickFrequency="500" IsSnapToTickEnabled="True" Value="{Binding Text, ElementName=Bitrate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsEnabled, ElementName=Bitrate}" AutomationProperties.Name="Bitrate slider"/>
+                  </StackPanel>
+                </Grid>
+              </StackPanel>
+            </Border>
+            <Border BorderBrush="{StaticResource Signal}" BorderThickness="2,0,0,0" Padding="14,2,0,2" Margin="0,16,0,0">
+              <TextBlock Style="{StaticResource Margin}" Text="Wi-Fi tip: if video stutters, lower the bitrate before the resolution. A wired PC or 5 GHz Wi-Fi next to the router keeps delay steadier."/>
+            </Border>
+          </StackPanel>
+        </ScrollViewer>
+      </TabItem>
+
+      <!-- 03 PICTURE -->
+      <TabItem Header="Picture" Tag="03">
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
+          <StackPanel Margin="40,32,34,20" MaxWidth="680" HorizontalAlignment="Left">
+            <Grid Margin="0,0,0,26">
+              <StackPanel>
+                <TextBlock Style="{StaticResource Eyebrow}" Text="PICTURE"/>
+                <TextBlock Style="{StaticResource PageTitle}" Text="How it reaches the glass" Margin="0,2,0,0"/>
+              </StackPanel>
+              <Path HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,6,0" Stroke="#FF5B4B" StrokeThickness="2" StrokeLineJoin="Round" Data="M0 10V0H10M60 0H70V10M70 30V40H60M10 40H0V30M26 20H44" Width="70" Height="40" Stretch="None"/>
+            </Grid>
+            <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="4" Padding="22,18">
+              <StackPanel>
+                <Grid Margin="0,0,0,18">
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Decoder"/><TextBlock Style="{StaticResource FieldHint}" Text="Hardware falls back to software if the GPU cannot decode the stream."/></StackPanel>
+                  <ComboBox x:Name="Decoder" Grid.Column="1" Width="270" HorizontalAlignment="Left" VerticalAlignment="Top" AutomationProperties.Name="Decoder"/>
+                </Grid>
+                <Grid Margin="0,0,0,18">
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Renderer"/><TextBlock Style="{StaticResource FieldHint}" Text="Draws decoded frames."/></StackPanel>
+                  <ComboBox x:Name="Renderer" Grid.Column="1" Width="270" HorizontalAlignment="Left" VerticalAlignment="Top" AutomationProperties.Name="Renderer"/>
+                </Grid>
+                <Grid Margin="0,0,0,18">
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Scaling"/><TextBlock Style="{StaticResource FieldHint}" Text="Direct draws frames as decoded. Filters can sharpen but may add blur or delay."/></StackPanel>
+                  <ComboBox x:Name="Scaling" Grid.Column="1" Width="270" HorizontalAlignment="Left" VerticalAlignment="Top" AutomationProperties.Name="Scaling"/>
+                </Grid>
+                <Grid Margin="0,0,0,18">
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Frame mixer"/><TextBlock Style="{StaticResource FieldHint}" Text="Direct keeps frames separate. Blends smooth motion and can soften it."/></StackPanel>
+                  <ComboBox x:Name="Mixer" Grid.Column="1" Width="270" HorizontalAlignment="Left" VerticalAlignment="Top" AutomationProperties.Name="Frame mixer"/>
+                </Grid>
+                <Grid Margin="0,0,0,18">
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Window"/><TextBlock Style="{StaticResource FieldHint}" Text="How the player opens."/></StackPanel>
+                  <ComboBox x:Name="WindowMode" Grid.Column="1" Width="270" HorizontalAlignment="Left" VerticalAlignment="Top" AutomationProperties.Name="Window mode"/>
+                </Grid>
+                <Grid>
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Sync"/><TextBlock Style="{StaticResource FieldHint}" Text="Ties presentation to the display refresh."/></StackPanel>
+                  <CheckBox x:Name="Vsync" Grid.Column="1" Content="Vertical sync" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,7,0,0"/>
+                </Grid>
+              </StackPanel>
+            </Border>
+          </StackPanel>
+        </ScrollViewer>
+      </TabItem>
+
+      <!-- 04 SOUND -->
+      <TabItem Header="Sound" Tag="04">
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
+          <StackPanel Margin="40,32,34,20" MaxWidth="680" HorizontalAlignment="Left">
+            <Grid Margin="0,0,0,26">
+              <StackPanel>
+                <TextBlock Style="{StaticResource Eyebrow}" Text="SOUND"/>
+                <TextBlock Style="{StaticResource PageTitle}" Text="What you hear" Margin="0,2,0,0"/>
+              </StackPanel>
+              <Path HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,6,0" Stroke="#FF5B4B" StrokeThickness="3" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Data="M4 28V12M16 34V6M28 24V16M40 36V4M52 26V14M64 30V10" Width="68" Height="40" Stretch="None"/>
+            </Grid>
+            <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="4" Padding="22,18">
+              <StackPanel>
+                <Grid Margin="0,0,0,18">
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Volume"/><TextBlock Style="{StaticResource FieldHint}" Text="Whole number from 0 to 100."/></StackPanel>
+                  <StackPanel Grid.Column="1" Width="200" HorizontalAlignment="Left" VerticalAlignment="Top">
+                    <Grid>
+                      <TextBox x:Name="Volume" Padding="11,0,40,0" AutomationProperties.Name="Volume percent"/>
+                      <TextBlock Style="{StaticResource Unit}" Text="%" HorizontalAlignment="Right" Margin="0,0,15,0"/>
+                    </Grid>
+                    <Slider x:Name="VolumeSlider" Margin="0,10,0,0" Minimum="0" Maximum="100" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding Text, ElementName=Volume, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsEnabled, ElementName=Volume}" AutomationProperties.Name="Volume slider"/>
+                  </StackPanel>
+                </Grid>
+                <Grid>
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Audio buffer"/><TextBlock Style="{StaticResource FieldHint}" Text="0 picks a size automatically."/></StackPanel>
+                  <StackPanel Grid.Column="1" Width="200" HorizontalAlignment="Left" VerticalAlignment="Top">
+                    <Grid>
+                      <TextBox x:Name="AudioBuffer" Padding="11,0,44,0" AutomationProperties.Name="Audio buffer in milliseconds"/>
+                      <TextBlock Style="{StaticResource Unit}" Text="ms" HorizontalAlignment="Right" Margin="0,0,13,0"/>
+                    </Grid>
+                    <Slider x:Name="BufferSlider" Margin="0,10,0,0" Minimum="0" Maximum="100" TickFrequency="10" IsSnapToTickEnabled="True" Value="{Binding Text, ElementName=AudioBuffer, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsEnabled, ElementName=AudioBuffer}" AutomationProperties.Name="Audio buffer slider"/>
+                  </StackPanel>
+                </Grid>
+              </StackPanel>
+            </Border>
+            <Border BorderBrush="{StaticResource Signal}" BorderThickness="2,0,0,0" Padding="14,2,0,2" Margin="0,16,0,0">
+              <TextBlock Style="{StaticResource Margin}" Text="A smaller buffer lowers audio delay but can crackle on a busy network. Raise it if you hear dropouts."/>
+            </Border>
+          </StackPanel>
+        </ScrollViewer>
+      </TabItem>
+    </TabControl>
+
+    <!-- Shared footer: draft actions and the latest result -->
+    <Border VerticalAlignment="Bottom" Height="76" Margin="224,0,0,0" Background="#0F0E0D" BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0">
+      <Grid Margin="40,0,34,0">
+        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" VerticalAlignment="Center" MaxHeight="56" Margin="0,0,18,0" Focusable="False">
+          <TextBlock x:Name="Notice" Foreground="{StaticResource Muted}" FontSize="13" TextWrapping="Wrap" LineHeight="18" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+        </ScrollViewer>
+        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+          <Button x:Name="Revert" Content="Revert" Margin="0,0,10,0"/>
+          <Button x:Name="Apply" Style="{StaticResource Accent}" Content="Apply"/>
+        </StackPanel>
+      </Grid>
+    </Border>
+  </Grid>
+</Window>
