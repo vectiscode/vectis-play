@@ -627,6 +627,7 @@ internal sealed class Controller : IDisposable
 			StreamSettings.SetIfAbsent(settings, "disconnect_action", "nothing");
 			StreamSettings.SetIfAbsent(settings, "remote_play_ask", "false");
 			StreamSettings.SetIfAbsent(settings, "add_steam_shortcut_ask", "false");
+			StreamSettings.WriteDefaultKeyMap(root);
 			if (console != null)
 				settings.SetValue("auto_connect_mac", console.Mac, console.MacKind);
 			else

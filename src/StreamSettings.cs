@@ -98,28 +98,49 @@ internal static class StreamSettings
 	// Upstream stores each PS5 button map as a QKeySequence string under
 	// keymap/<button name>, which is too rich for an in-app editor. The
 	// Controls tab shows this read-only table and hands editing to chiaki-ng.
-	// Columns: display name, registry value name, upstream default display.
+	// Columns: display name, registry value name, Vectis default (a QKeySequence
+	// string). The defaults are a WASD layout written once on first use.
 	private static readonly string[][] KeyMapRows =
 	{
-		new[] { "Cross", "cross", "Enter" },
-		new[] { "Moon", "moon", "Backspace" },
-		new[] { "Box", "box", "\\" },
-		new[] { "Pyramid", "pyramid", "C" },
-		new[] { "D-Pad Left", "d-pad_left", "Left" },
-		new[] { "D-Pad Right", "d-pad_right", "Right" },
+		new[] { "Left stick up", "left_stick_up", "W" },
+		new[] { "Left stick left", "left_stick_left", "A" },
+		new[] { "Left stick down", "left_stick_down", "S" },
+		new[] { "Left stick right", "left_stick_right", "D" },
+		new[] { "Cross", "cross", "Space" },
+		new[] { "Circle", "moon", "C" },
+		new[] { "Square", "box", "R" },
+		new[] { "Triangle", "pyramid", "F" },
+		new[] { "L1", "l1", "Q" },
+		new[] { "R1", "r1", "E" },
+		new[] { "L2", "l2", "1" },
+		new[] { "R2", "r2", "4" },
+		new[] { "L3", "l3", "Shift" },
+		new[] { "R3", "r3", "V" },
 		new[] { "D-Pad Up", "d-pad_up", "Up" },
 		new[] { "D-Pad Down", "d-pad_down", "Down" },
-		new[] { "L1", "l1", "2" },
-		new[] { "R1", "r1", "3" },
-		new[] { "L3", "l3", "5" },
-		new[] { "R3", "r3", "6" },
-		new[] { "Options", "options", "O" },
-		new[] { "Share", "share", "F" },
-		new[] { "Touchpad", "touchpad", "T" },
-		new[] { "PS", "ps", "Esc" },
-		new[] { "L2", "l2", "1" },
-		new[] { "R2", "r2", "4" }
+		new[] { "D-Pad Left", "d-pad_left", "Left" },
+		new[] { "D-Pad Right", "d-pad_right", "Right" },
+		new[] { "Options", "options", "Esc" },
+		new[] { "Create", "share", "Backspace" },
+		new[] { "Touchpad", "touchpad", "Tab" },
+		new[] { "PS", "ps", "Home" }
 	};
+
+	// Upstream stores the key map at the root as keymap/<name>. Write the WASD
+	// layout only when no key map exists, so edits made in chiaki-ng stay.
+	internal static void WriteDefaultKeyMap(RegistryKey root)
+	{
+		using (RegistryKey existing = root.OpenSubKey("keymap", false))
+		{
+			if (existing != null)
+				return;
+		}
+		using (RegistryKey keymap = root.CreateSubKey("keymap", RegistryKeyPermissionCheck.ReadWriteSubTree))
+		{
+			foreach (string[] row in KeyMapRows)
+				keymap.SetValue(row[1], row[2], RegistryValueKind.String);
+		}
+	}
 
 	internal static List<ConsoleEntry> ReadConsoles()
 	{
@@ -375,7 +396,7 @@ internal static class StreamSettings
 	{
 		List<KeyMapEntry> rows = new List<KeyMapEntry>();
 		Dictionary<string, string> stored = new Dictionary<string, string>();
-		using (RegistryKey s = Registry.CurrentUser.OpenSubKey(RegistryPath + @"\settings\keymap", false))
+		using (RegistryKey s = Registry.CurrentUser.OpenSubKey(RegistryPath + @"\keymap", false))
 		{
 			if (s != null)
 				foreach (string name in s.GetValueNames())
