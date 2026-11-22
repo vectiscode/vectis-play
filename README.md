@@ -2,7 +2,7 @@
 
 A Windows launcher and settings workbench for [chiaki-ng](https://github.com/chiaki-ng/chiaki-ng) PS5 Remote Play. Vectis Play is a small .NET Framework WPF app that starts a bundled chiaki-ng player and exposes the stream, picture and sound settings that matter for a short button-to-picture path. The video stream never passes through the launcher.
 
-The runtime is the official chiaki-ng v1.10.1 Windows portable archive ([release](https://github.com/chiaki-ng/chiaki-ng/releases/tag/v1.10.1), [source at commit f30da0aaeb96fc0026cc03683153f682352e7d7c](https://github.com/chiaki-ng/chiaki-ng/tree/f30da0aaeb96fc0026cc03683153f682352e7d7c)), unmodified except for one shared organization and application name literal in `chiaki.exe` that moves its settings to `HKCU\Software\Vectis\Vectis`. `namespace.patch` is the equivalent source change for `gui/src/main.cpp`. Not endorsed or certified by Sony Interactive Entertainment. chiaki-ng and Chiaki are by their authors and contributors; see upstream `docs/index.md` for attribution.
+The runtime is chiaki-ng v1.10.1 ([source at commit f30da0aaeb96fc0026cc03683153f682352e7d7c](https://github.com/chiaki-ng/chiaki-ng/tree/f30da0aaeb96fc0026cc03683153f682352e7d7c)) with the patches in `patches/`: `0001` moves settings to `HKCU\Software\Vectis\Vectis`, `0002` adds optional mouse aim (Raw Input to right stick inside the player, paced at up to 500 Hz) and `0003` gives WASD last-input-wins, circular diagonals and a walk key. `.github/workflows/runtime.yml` builds it and the result is published as the [runtime-1.10.1-vectis.1 release](https://github.com/vectiscode/vectis-play/releases/tag/runtime-1.10.1-vectis.1). Not endorsed or certified by Sony Interactive Entertainment. chiaki-ng and Chiaki are by their authors and contributors; see upstream `docs/index.md` for attribution.
 
 ## Layout
 
@@ -13,15 +13,15 @@ The runtime is the official chiaki-ng v1.10.1 Windows portable archive ([release
 - `src/LinkPanel.cs`: Session link card drawing and readout.
 - `Workbench.xaml`: window layout, embedded as `Vectis.Workbench.xaml`. Four tabs: Session, Stream, Picture, Sound.
 - `VectisPlay.manifest`, `assets/VectisPlay.ico`: manifest and icon. The mark follows the vectiscode site favicon under MIT, see `LICENSES/Vectis-brand-MIT.txt`.
-- `build.py`: verifies and stages the runtime, patches the exe literal, compiles the launcher.
+- `build.py`: downloads and verifies the runtime release, checks `patches/` against `upstream/`, compiles the launcher.
 - `runtime/`: build output, gitignored. `chiaki-ng-Win/chiaki.exe` is SHA-256 checked before every launch and every settings write.
-- `namespace.patch`: source form of the exe rebrand.
+- `patches/`: the source changes the runtime is built from, applied in order.
 - `motion_lab.py`: optional offline experiment, see below.
 - `COPYING`, `LICENSES/`: AGPL-3.0 with the OpenSSL exception for chiaki-ng and the launcher, MIT for the brand mark.
 
 ## Build
 
-Requires Windows with the inbox .NET Framework 4.x compiler and WPF, Python 3 and git for the patch check. The release zip is expected at the repo root; if absent `build.py` downloads the pinned v1.10.1 asset and verifies its SHA-256 before extracting.
+Requires Windows with the inbox .NET Framework 4.x compiler and WPF, Python 3 and git for the patch check. The runtime zip is expected at the repo root; if absent `build.py` downloads the pinned release asset and verifies the zip and `chiaki.exe` SHA-256 before extracting.
 
 ```
 python build.py

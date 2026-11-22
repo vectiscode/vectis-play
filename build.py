@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
-"""Vectis Play build: stage the verified chiaki-ng backend and compile the launcher.
+"""Vectis Play build: stage the verified Vectis runtime and compile the launcher.
 
-Steps: require the shipped license texts, ensure the pinned release zip
+Steps: require the shipped license texts, ensure the pinned runtime zip
 (download only if absent), verify its SHA-256, extract into a disposable
-staging dir inside this repo, rebrand the single organization/app data
-literal inside chiaki.exe and verify the patched hash, move the payload to
-runtime/, check namespace.patch against the upstream checkout when present,
+staging dir inside this repo, verify chiaki.exe, move the payload to
+runtime/, check that patches/ apply to the upstream checkout when present,
 then compile the sources in src/ with the .NET Framework csc.
+
+The runtime is chiaki-ng v1.10.1 (f30da0a) with patches/ applied, built by
+.github/workflows/runtime.yml and published as a release of this repo.
 """
 
 import hashlib
+import os
 import subprocess
 import sys
 import tempfile
@@ -18,13 +21,11 @@ import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-ZIP_NAME = "chiaki-ng-win_x64-MSYS2-portable-1.10.1.zip"
-ZIP_URL = "https://github.com/chiaki-ng/chiaki-ng/releases/download/v1.10.1/" + ZIP_NAME
-ZIP_SHA256 = "6ca3f5e6780608104d79345ab7755cfa77fefc33a41ae10651a874c43f54ea57"
-STOCK_EXE_SHA256 = "c69a1e2dbf7406f74ae8a33c7c98fba226d79431a36aca5bc7143cedc4d19dec"
-PATCHED_EXE_SHA256 = "834e7f6c971183664dc9367eae054fbfb4e964e596d37e0aa43f69406bb70805"
-OLD = b"ChiakiRegistEventType\x00Chiaki\x001.10.1\x00chiaki-ng\x00"
-NEW = OLD.replace(b"\x00Chiaki\x00", b"\x00Vectis\x00")
+ZIP_NAME = "vectis-runtime-win_x64-1.10.1-0988b51.zip"
+ZIP_URL = ("https://github.com/vectiscode/vectis-play/releases/download/"
+           "runtime-1.10.1-vectis.1/" + ZIP_NAME)
+ZIP_SHA256 = "b7af939b641ad4f35e17d747fabc0594db806d4ec86f33d4ce25a5046f1e567f"
+EXE_SHA256 = "61c0525ff9ac80a290a9534d04dbe1e9b85177523826d4ad7cbb5c580642390d"
 CSC = Path(r"C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe")
 
 
@@ -68,12 +69,12 @@ def ensure_zip():
 def stage_backend(zip_path):
     backend = ROOT / "runtime"
     exe = backend / "chiaki-ng-Win" / "chiaki.exe"
-    if exe.exists() and sha256_file(exe) == PATCHED_EXE_SHA256:
+    if exe.exists() and sha256_file(exe) == EXE_SHA256:
         print("runtime/ already staged and verified, skipping extraction")
         return
     if backend.exists():
         fail("runtime/ exists but chiaki.exe is missing or fails verification; "
-             "refusing to modify it, remove it manually to rebuild")
+             "refusing to modify it, move it aside manually to rebuild")
 
     with tempfile.TemporaryDirectory(prefix=".vectis-stage-", dir=ROOT) as staging:
         payload = Path(staging) / "payload"
@@ -81,33 +82,29 @@ def stage_backend(zip_path):
         print("Extracting " + ZIP_NAME)
         with zipfile.ZipFile(zip_path) as archive:
             archive.extractall(payload)
-
-        staged_exe = payload / "chiaki-ng-Win" / "chiaki.exe"
-        data = staged_exe.read_bytes()
-        if sha256_bytes(data) != STOCK_EXE_SHA256:
-            fail("stock chiaki.exe sha256 mismatch")
-        if data.count(OLD) != 1:
-            fail("rebrand literal found %d times, expected 1" % data.count(OLD))
-        patched = data.replace(OLD, NEW)
-        if sha256_bytes(patched) != PATCHED_EXE_SHA256:
-            fail("patched chiaki.exe sha256 mismatch")
-        staged_exe.write_bytes(patched)
-
+        if sha256_file(payload / "chiaki-ng-Win" / "chiaki.exe") != EXE_SHA256:
+            fail("runtime chiaki.exe sha256 mismatch")
         payload.rename(backend)
-        print("runtime/ staged, chiaki.exe rebranded and verified")
+        print("runtime/ staged and verified")
 
 
-def check_patch():
+def check_patches():
     upstream = ROOT / "upstream"
-    patch = ROOT / "namespace.patch"
-    if not (upstream / ".git").exists() or not patch.exists():
+    patches = sorted((ROOT / "patches").glob("*.patch"))
+    if not (upstream / ".git").exists() or not patches:
         return
-    result = subprocess.run(
-        ["git", "-C", str(upstream), "apply", "--check", str(patch)],
-        capture_output=True, text=True)
-    if result.returncode != 0:
-        fail("namespace.patch does not apply cleanly: " + result.stderr.strip())
-    print("namespace.patch applies cleanly to upstream")
+    # Apply in order to a throwaway index so later patches see earlier ones
+    # while the upstream working tree stays untouched.
+    with tempfile.TemporaryDirectory(prefix=".vectis-index-", dir=ROOT) as scratch:
+        env = dict(os.environ, GIT_INDEX_FILE=str(Path(scratch) / "index"))
+        subprocess.run(["git", "-C", str(upstream), "read-tree", "HEAD"], env=env, check=True)
+        for patch in patches:
+            result = subprocess.run(
+                ["git", "-C", str(upstream), "apply", "--cached", str(patch)],
+                env=env, capture_output=True, text=True)
+            if result.returncode != 0:
+                fail(patch.name + " does not apply cleanly: " + result.stderr.strip())
+    print("patches/ apply cleanly to upstream in order")
 
 
 def compile_launcher():
@@ -140,7 +137,7 @@ def main():
     require_licenses()
     zip_path = ensure_zip()
     stage_backend(zip_path)
-    check_patch()
+    check_patches()
     compile_launcher()
     print("build complete")
 
