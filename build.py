@@ -21,11 +21,11 @@ import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-ZIP_NAME = "vectis-runtime-win_x64-1.10.1-0988b51.zip"
+ZIP_NAME = "vectis-runtime-win_x64-1.10.1-002ee9e.zip"
 ZIP_URL = ("https://github.com/vectiscode/vectis-play/releases/download/"
-           "runtime-1.10.1-vectis.1/" + ZIP_NAME)
-ZIP_SHA256 = "b7af939b641ad4f35e17d747fabc0594db806d4ec86f33d4ce25a5046f1e567f"
-EXE_SHA256 = "61c0525ff9ac80a290a9534d04dbe1e9b85177523826d4ad7cbb5c580642390d"
+           "runtime-1.10.1-vectis.2/" + ZIP_NAME)
+ZIP_SHA256 = "ef574d5df150859c0abf590a64926f9733a8e73ffd38a425e5bd25ced60cdd4a"
+EXE_SHA256 = "7aed600f343c82c67a4a72144d9cc5c2e92029ad42a98c49cfedd25fff5430df"
 CSC = Path(r"C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe")
 
 

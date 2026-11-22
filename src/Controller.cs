@@ -24,7 +24,7 @@ internal enum ChildKind
 
 internal sealed class Controller : IDisposable
 {
-	private const string ExpectedExeSha256 = "61c0525ff9ac80a290a9534d04dbe1e9b85177523826d4ad7cbb5c580642390d";
+	private const string ExpectedExeSha256 = "7aed600f343c82c67a4a72144d9cc5c2e92029ad42a98c49cfedd25fff5430df";
 
 	[DllImport("dwmapi.dll")]
 	private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attribute, ref int value, int size);
