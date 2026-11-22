@@ -145,8 +145,47 @@ internal static class StreamSettings
 		}
 	}
 
+	// Vectis keeps its own registration store so a stock chiaki-ng install is
+	// untouched. On first run, adopt an existing stock registration (for
+	// example one made through Veyra or chiaki-ng itself) so the console does
+	// not have to be paired twice. The marker prevents re-importing after the
+	// user removes the console inside Vectis.
+	private const string LegacyRegistryPath = @"Software\Chiaki\Chiaki";
+
+	internal static void ImportLegacyRegistration()
+	{
+		using (RegistryKey root = Registry.CurrentUser.CreateSubKey(RegistryPath, RegistryKeyPermissionCheck.ReadWriteSubTree))
+		{
+			if (root.GetValue("legacy_registration_imported", null) != null)
+				return;
+			root.SetValue("legacy_registration_imported", "1", RegistryValueKind.String);
+			if (root.OpenSubKey("registered_hosts", false) != null)
+				return;
+			using (RegistryKey legacy = Registry.CurrentUser.OpenSubKey(LegacyRegistryPath + @"\registered_hosts", false))
+			{
+				if (legacy == null)
+					return;
+				using (RegistryKey target = root.CreateSubKey("registered_hosts", RegistryKeyPermissionCheck.ReadWriteSubTree))
+					CopyKey(legacy, target);
+			}
+		}
+	}
+
+	private static void CopyKey(RegistryKey source, RegistryKey target)
+	{
+		foreach (string name in source.GetValueNames())
+			target.SetValue(name, source.GetValue(name, null, RegistryValueOptions.DoNotExpandEnvironmentNames), source.GetValueKind(name));
+		foreach (string sub in source.GetSubKeyNames())
+		{
+			using (RegistryKey src = source.OpenSubKey(sub, false))
+			using (RegistryKey dst = target.CreateSubKey(sub, RegistryKeyPermissionCheck.ReadWriteSubTree))
+				CopyKey(src, dst);
+		}
+	}
+
 	internal static List<ConsoleEntry> ReadConsoles()
 	{
+		ImportLegacyRegistration();
 		List<ConsoleEntry> result = new List<ConsoleEntry>();
 		using (RegistryKey root = Registry.CurrentUser.OpenSubKey(RegistryPath, false))
 		{
