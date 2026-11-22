@@ -9,7 +9,9 @@ using System.Security.Cryptography;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Interop;
+using System.Windows.Media;
 using System.Windows.Threading;
 using Microsoft.Win32;
 
@@ -59,7 +61,21 @@ internal sealed class Controller : IDisposable
 	private readonly TextBlock _sumScaling;
 	private readonly TextBlock _sumBuffer;
 	private readonly LinkPanel _linkPanel;
+	private readonly CheckBox _keyboardEnabled;
+	private readonly ComboBox _walkKey;
+	private readonly TextBox _walkScale;
+	private readonly CheckBox _mouseAim;
+	private readonly TextBox _aimSensitivity;
+	private readonly TextBox _aimYRatio;
+	private readonly TextBox _aimDeadzone;
+	private readonly TextBox _aimCurve;
+	private readonly TextBox _aimWindow;
+	private readonly TextBox _aimTau;
+	private readonly ComboBox _aimRelease;
+	private readonly UniformGrid _keyMapGrid;
+	private readonly AimPad _aimPad;
 	private readonly List<Control> _settingControls = new List<Control>();
+	private readonly List<Control> _aimControls = new List<Control>();
 	private readonly Dictionary<string, Control> _fieldControls = new Dictionary<string, Control>();
 	private readonly DispatcherTimer _watch = new DispatcherTimer();
 	private CancellationTokenSource _linkCheck;
@@ -89,8 +105,8 @@ internal sealed class Controller : IDisposable
 		_backendExe = Path.Combine(_backendDir, "chiaki.exe");
 
 		TabControl pages = Part<TabControl>("Pages");
-		if (pages.Items.Count != 4)
-			throw new InvalidOperationException("Workbench.xaml 'Pages' must hold 4 tabs, found " + pages.Items.Count.ToString(CultureInfo.InvariantCulture) + ".");
+		if (pages.Items.Count != 5)
+			throw new InvalidOperationException("Workbench.xaml 'Pages' must hold 5 tabs, found " + pages.Items.Count.ToString(CultureInfo.InvariantCulture) + ".");
 
 		_title = Part<TextBlock>("SessionTitle");
 		_detail = Part<TextBlock>("SessionDetail");
@@ -125,8 +141,24 @@ internal sealed class Controller : IDisposable
 			Part<TextBlock>("LinkMedian"), Part<TextBlock>("LinkP95"), Part<TextBlock>("LinkSpikes"),
 			Part<TextBlock>("LinkNotes"),
 			Part<Button>("CheckLink"), Part<Button>("UseLinkBitrate"));
+		_keyboardEnabled = Part<CheckBox>("KeyboardEnabled");
+		_walkKey = Part<ComboBox>("WalkKey");
+		_walkScale = Part<TextBox>("WalkScale");
+		_mouseAim = Part<CheckBox>("MouseAim");
+		_aimSensitivity = Part<TextBox>("AimSensitivity");
+		_aimYRatio = Part<TextBox>("AimYRatio");
+		_aimDeadzone = Part<TextBox>("AimDeadzone");
+		_aimCurve = Part<TextBox>("AimCurve");
+		_aimWindow = Part<TextBox>("AimWindow");
+		_aimTau = Part<TextBox>("AimTau");
+		_aimRelease = Part<ComboBox>("AimRelease");
+		_keyMapGrid = Part<UniformGrid>("KeyMapGrid");
+		_aimPad = new AimPad(_win,
+			Part<Canvas>("ResponseGraph"), Part<Canvas>("AimPad"),
+			Part<TextBlock>("AimSpeed"), Part<TextBlock>("AimStick"));
 
-		_settingControls.AddRange(new Control[] { _vsync, _resolution, _rate, _codec, _decoder, _renderer, _scaling, _mixer, _windowMode, _bitrate, _volume, _audioBuffer });
+		_settingControls.AddRange(new Control[] { _vsync, _resolution, _rate, _codec, _decoder, _renderer, _scaling, _mixer, _windowMode, _bitrate, _volume, _audioBuffer, _keyboardEnabled, _walkKey, _walkScale, _mouseAim });
+		_aimControls.AddRange(new Control[] { _aimSensitivity, _aimYRatio, _aimDeadzone, _aimCurve, _aimWindow, _aimTau, _aimRelease });
 		_fieldControls["resolution"] = _resolution;
 		_fieldControls["rate"] = _rate;
 		_fieldControls["bitrate"] = _bitrate;
@@ -139,6 +171,17 @@ internal sealed class Controller : IDisposable
 		_fieldControls["buffer"] = _audioBuffer;
 		_fieldControls["scaling"] = _scaling;
 		_fieldControls["mixer"] = _mixer;
+		_fieldControls["keyboard"] = _keyboardEnabled;
+		_fieldControls["walkkey"] = _walkKey;
+		_fieldControls["walkscale"] = _walkScale;
+		_fieldControls["mouseaim"] = _mouseAim;
+		_fieldControls["aimsens"] = _aimSensitivity;
+		_fieldControls["aimyratio"] = _aimYRatio;
+		_fieldControls["aimdeadzone"] = _aimDeadzone;
+		_fieldControls["aimcurve"] = _aimCurve;
+		_fieldControls["aimwindow"] = _aimWindow;
+		_fieldControls["aimtau"] = _aimTau;
+		_fieldControls["aimrelease"] = _aimRelease;
 
 		_win.ResizeMode = ResizeMode.CanResize;
 		_win.Closing += OnWindowClosing;
@@ -158,6 +201,7 @@ internal sealed class Controller : IDisposable
 		_revert.Click += delegate { OnRevert(); };
 		Part<Button>("CheckLink").Click += delegate { OnCheckLink(); };
 		Part<Button>("UseLinkBitrate").Click += delegate { ApplyLinkSuggestion(); };
+		Part<Button>("EditKeyMap").Click += delegate { StartSetup(ChildKind.Native); };
 		_consoleList.SelectionChanged += delegate
 		{
 			if (_syncingConsoles || _consoleList.SelectedIndex < 0)
@@ -168,14 +212,18 @@ internal sealed class Controller : IDisposable
 				_title.Text = selected.Name;
 		};
 
-		ComboBox[] combos = { _resolution, _rate, _codec, _decoder, _renderer, _scaling, _mixer, _windowMode };
+		ComboBox[] combos = { _resolution, _rate, _codec, _decoder, _renderer, _scaling, _mixer, _windowMode, _walkKey, _aimRelease };
 		foreach (ComboBox combo in combos)
 			combo.SelectionChanged += delegate { OnDraftChanged(); };
-		TextBox[] boxes = { _bitrate, _volume, _audioBuffer };
+		TextBox[] boxes = { _bitrate, _volume, _audioBuffer, _walkScale, _aimSensitivity, _aimYRatio, _aimDeadzone, _aimCurve, _aimWindow, _aimTau };
 		foreach (TextBox box in boxes)
 			box.TextChanged += delegate { OnDraftChanged(); };
 		_vsync.Checked += delegate { OnDraftChanged(); };
 		_vsync.Unchecked += delegate { OnDraftChanged(); };
+		_keyboardEnabled.Checked += delegate { OnDraftChanged(); };
+		_keyboardEnabled.Unchecked += delegate { OnDraftChanged(); };
+		_mouseAim.Checked += delegate { OnDraftChanged(); };
+		_mouseAim.Unchecked += delegate { OnDraftChanged(); };
 
 		_watch.Interval = TimeSpan.FromMilliseconds(400);
 		_watch.Tick += delegate
@@ -199,6 +247,8 @@ internal sealed class Controller : IDisposable
 			_linkCheck.Cancel();
 		if (_child != null)
 			_child.Dispose();
+		if (_aimPad != null)
+			_aimPad.Dispose();
 	}
 
 	private T Part<T>(string name) where T : class
@@ -532,6 +582,8 @@ internal sealed class Controller : IDisposable
 	{
 		if (_closing)
 			return;
+		if (_aimPad != null)
+			_aimPad.Release();
 		if (_linkCheck != null)
 		{
 			_linkCheck.Cancel();
@@ -637,6 +689,19 @@ internal sealed class Controller : IDisposable
 			_volume.Text = saved["volume"];
 			_audioBuffer.Text = saved["buffer"];
 			_vsync.IsChecked = saved["vsync"] == "true";
+			ShowCombo(_walkKey, StreamSettings.WalkKeyChoices, saved["walkkey"]);
+			ShowCombo(_aimRelease, StreamSettings.AimReleaseChoices, saved["aimrelease"]);
+			_keyboardEnabled.IsChecked = saved["keyboard"] == "true";
+			_walkScale.Text = saved["walkscale"];
+			_mouseAim.IsChecked = saved["mouseaim"] == "true";
+			_aimSensitivity.Text = saved["aimsens"];
+			_aimYRatio.Text = saved["aimyratio"];
+			_aimDeadzone.Text = saved["aimdeadzone"];
+			_aimCurve.Text = saved["aimcurve"];
+			_aimWindow.Text = saved["aimwindow"];
+			_aimTau.Text = saved["aimtau"];
+			LoadKeyMap();
+			_aimPad.SyncFrom(saved);
 			_sumResolution.Text = StreamSettings.SummaryChoice(StreamSettings.ResolutionChoices, saved["resolution"]);
 			_sumRate.Text = StreamSettings.SummaryChoice(StreamSettings.RateChoices, saved["rate"]);
 			_sumBitrate.Text = StreamSettings.SummaryNumber(saved["bitrate"], "kbps");
@@ -654,6 +719,7 @@ internal sealed class Controller : IDisposable
 			_sumDecoder.Text = string.Empty;
 			_sumScaling.Text = string.Empty;
 			_sumBuffer.Text = string.Empty;
+			_keyMapGrid.Children.Clear();
 			SetNotice("Stream settings could not be loaded: " + ex.Message + " Use Revert to retry.");
 		}
 		finally
@@ -661,6 +727,45 @@ internal sealed class Controller : IDisposable
 			_loading = false;
 		}
 		UpdateDraftState();
+	}
+
+	private void LoadKeyMap()
+	{
+		_keyMapGrid.Children.Clear();
+		foreach (KeyMapEntry row in StreamSettings.ReadKeyMap())
+		{
+			Grid cell = new Grid();
+			cell.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+			cell.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+			TextBlock button = new TextBlock
+			{
+				Text = row.Button.ToUpperInvariant(),
+				FontFamily = new FontFamily("Consolas"),
+				FontSize = 11,
+				Foreground = FindBrush("Muted"),
+				VerticalAlignment = VerticalAlignment.Center
+			};
+			TextBlock key = new TextBlock
+			{
+				Text = row.Key,
+				FontFamily = new FontFamily("Consolas"),
+				FontSize = 12,
+				FontWeight = FontWeights.SemiBold,
+				Foreground = FindBrush("Paper"),
+				HorizontalAlignment = HorizontalAlignment.Right,
+				VerticalAlignment = VerticalAlignment.Center,
+				Margin = new Thickness(10, 0, 0, 0)
+			};
+			Grid.SetColumn(key, 1);
+			cell.Children.Add(button);
+			cell.Children.Add(key);
+			_keyMapGrid.Children.Add(cell);
+		}
+	}
+
+	private Brush FindBrush(string key)
+	{
+		return (Brush)_win.FindResource(key);
 	}
 
 	private static void ShowCombo(ComboBox combo, Choice[] choices, string value)
@@ -700,6 +805,17 @@ internal sealed class Controller : IDisposable
 		ui["buffer"] = (_audioBuffer.Text ?? string.Empty).Trim();
 		ui["scaling"] = ComboValue(_scaling);
 		ui["mixer"] = ComboValue(_mixer);
+		ui["keyboard"] = _keyboardEnabled.IsChecked == true ? "true" : "false";
+		ui["walkkey"] = ComboValue(_walkKey);
+		ui["walkscale"] = (_walkScale.Text ?? string.Empty).Trim();
+		ui["mouseaim"] = _mouseAim.IsChecked == true ? "true" : "false";
+		ui["aimsens"] = (_aimSensitivity.Text ?? string.Empty).Trim();
+		ui["aimyratio"] = (_aimYRatio.Text ?? string.Empty).Trim();
+		ui["aimdeadzone"] = (_aimDeadzone.Text ?? string.Empty).Trim();
+		ui["aimcurve"] = (_aimCurve.Text ?? string.Empty).Trim();
+		ui["aimwindow"] = (_aimWindow.Text ?? string.Empty).Trim();
+		ui["aimtau"] = (_aimTau.Text ?? string.Empty).Trim();
+		ui["aimrelease"] = ComboValue(_aimRelease);
 		return ui;
 	}
 
@@ -729,10 +845,14 @@ internal sealed class Controller : IDisposable
 	private void UpdateDraftState()
 	{
 		bool running = ChildRunning();
-		List<string> changedIds = _settingsFailed || _saved == null ? new List<string>() : Changed(ReadUi());
+		Dictionary<string, string> ui = ReadUi();
+		List<string> changedIds = _settingsFailed || _saved == null ? new List<string>() : Changed(ui);
 		int count = changedIds.Count;
 		foreach (Control control in _settingControls)
 			control.IsEnabled = !running && !_settingsFailed;
+		bool aimOn = _mouseAim.IsChecked == true;
+		foreach (Control control in _aimControls)
+			control.IsEnabled = !running && !_settingsFailed && aimOn;
 		foreach (KeyValuePair<string, Control> pair in _fieldControls)
 			pair.Value.Tag = changedIds.Contains(pair.Key) ? "changed" : null;
 		_apply.IsEnabled = !running && !_settingsFailed && count > 0;
@@ -740,6 +860,7 @@ internal sealed class Controller : IDisposable
 		_apply.Content = count > 0 ? string.Format(CultureInfo.InvariantCulture, "Apply {0} change{1}", count, count == 1 ? string.Empty : "s") : "Apply";
 		_revert.Content = "Revert";
 		_linkPanel.SetChildRunning(running);
+		_aimPad.SyncFrom(ui);
 	}
 
 	private void OnApply()

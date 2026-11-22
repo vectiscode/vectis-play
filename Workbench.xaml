@@ -681,6 +681,159 @@
           </StackPanel>
         </ScrollViewer>
       </TabItem>
+
+      <!-- 05 CONTROLS -->
+      <TabItem Header="Controls" Tag="05">
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
+          <StackPanel Margin="40,32,34,20" MaxWidth="680" HorizontalAlignment="Left">
+            <Grid Margin="0,0,0,26">
+              <StackPanel>
+                <TextBlock Style="{StaticResource Eyebrow}" Text="CONTROLS"/>
+                <TextBlock Style="{StaticResource PageTitle}" Text="How you play" Margin="0,2,0,0"/>
+              </StackPanel>
+              <Path HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,6,0" Stroke="#FF5B4B" StrokeThickness="2" StrokeLineJoin="Round" Data="M10 15H30Q34 15 34 19V27Q34 31 30 31H10Q6 31 6 27V19Q6 15 10 15ZM13 20H17M15 18V22M25 22H29M27 20V24" Width="40" Height="40" Stretch="None"/>
+            </Grid>
+
+            <!-- Keyboard card -->
+            <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="4" Padding="22,18">
+              <StackPanel>
+                <Grid Margin="0,0,0,18">
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Keyboard"/><TextBlock Style="{StaticResource FieldHint}" Text="Keys act as controller buttons while connected."/></StackPanel>
+                  <CheckBox x:Name="KeyboardEnabled" Grid.Column="1" Content="Keyboard as controller" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,7,0,0" AutomationProperties.Name="Keyboard as controller"/>
+                </Grid>
+                <Grid Margin="0,0,0,18">
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Walk key"/><TextBlock Style="{StaticResource FieldHint}" Text="Hold with WASD to walk instead of run."/></StackPanel>
+                  <ComboBox x:Name="WalkKey" Grid.Column="1" Width="260" HorizontalAlignment="Left" VerticalAlignment="Top" AutomationProperties.Name="Walk key"/>
+                </Grid>
+                <Grid>
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Walk speed"/><TextBlock Style="{StaticResource FieldHint}" Text="How fast the character walks while the walk key is held."/></StackPanel>
+                  <StackPanel Grid.Column="1" Width="260" HorizontalAlignment="Left" VerticalAlignment="Top">
+                    <Grid>
+                      <TextBox x:Name="WalkScale" Padding="11,0,40,0" AutomationProperties.Name="Walk speed percent"/>
+                      <TextBlock Style="{StaticResource Unit}" Text="%" HorizontalAlignment="Right" Margin="0,0,15,0"/>
+                    </Grid>
+                    <Slider x:Name="WalkScaleSlider" Margin="0,10,0,0" Minimum="20" Maximum="80" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding Text, ElementName=WalkScale, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsEnabled, ElementName=WalkScale}" AutomationProperties.Name="Walk speed slider"/>
+                  </StackPanel>
+                </Grid>
+              </StackPanel>
+            </Border>
+
+            <!-- Mouse aim card -->
+            <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="4" Padding="22,18" Margin="0,16,0,0">
+              <StackPanel>
+                <Grid Margin="0,0,0,18">
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Mouse"/><TextBlock Style="{StaticResource FieldHint}" Text="Steer the right stick by moving the mouse."/></StackPanel>
+                  <CheckBox x:Name="MouseAim" Grid.Column="1" Content="Mouse aim" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,7,0,0" AutomationProperties.Name="Mouse aim"/>
+                </Grid>
+                <Grid Margin="0,0,0,18">
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Sensitivity"/><TextBlock Style="{StaticResource FieldHint}" Text="Higher values reach full stick sooner."/></StackPanel>
+                  <StackPanel Grid.Column="1" Width="260" HorizontalAlignment="Left" VerticalAlignment="Top">
+                    <TextBox x:Name="AimSensitivity" AutomationProperties.Name="Aim sensitivity"/>
+                    <Slider x:Name="AimSensitivitySlider" Margin="0,10,0,0" Minimum="0.1" Maximum="5" TickFrequency="0.1" IsSnapToTickEnabled="True" Value="{Binding Text, ElementName=AimSensitivity, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsEnabled, ElementName=AimSensitivity}" AutomationProperties.Name="Sensitivity slider"/>
+                  </StackPanel>
+                </Grid>
+                <Grid Margin="0,0,0,18">
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Vertical ratio"/><TextBlock Style="{StaticResource FieldHint}" Text="Above 1 makes vertical aim faster than horizontal."/></StackPanel>
+                  <StackPanel Grid.Column="1" Width="260" HorizontalAlignment="Left" VerticalAlignment="Top">
+                    <TextBox x:Name="AimYRatio" AutomationProperties.Name="Aim vertical ratio"/>
+                    <Slider x:Name="AimYRatioSlider" Margin="0,10,0,0" Minimum="0.25" Maximum="4" TickFrequency="0.25" IsSnapToTickEnabled="True" Value="{Binding Text, ElementName=AimYRatio, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsEnabled, ElementName=AimYRatio}" AutomationProperties.Name="Vertical ratio slider"/>
+                  </StackPanel>
+                </Grid>
+                <Grid Margin="0,0,0,18">
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Deadzone"/><TextBlock Style="{StaticResource FieldHint}" Text="Jumps past the game's stick deadzone so small moves register."/></StackPanel>
+                  <StackPanel Grid.Column="1" Width="260" HorizontalAlignment="Left" VerticalAlignment="Top">
+                    <Grid>
+                      <TextBox x:Name="AimDeadzone" Padding="11,0,40,0" AutomationProperties.Name="Aim deadzone percent"/>
+                      <TextBlock Style="{StaticResource Unit}" Text="%" HorizontalAlignment="Right" Margin="0,0,15,0"/>
+                    </Grid>
+                    <Slider x:Name="AimDeadzoneSlider" Margin="0,10,0,0" Minimum="0" Maximum="50" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding Text, ElementName=AimDeadzone, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsEnabled, ElementName=AimDeadzone}" AutomationProperties.Name="Deadzone slider"/>
+                  </StackPanel>
+                </Grid>
+                <Grid Margin="0,0,0,18">
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Curve"/><TextBlock Style="{StaticResource FieldHint}" Text="Below 1 makes slow aim finer and keeps flicks fast."/></StackPanel>
+                  <StackPanel Grid.Column="1" Width="260" HorizontalAlignment="Left" VerticalAlignment="Top">
+                    <TextBox x:Name="AimCurve" AutomationProperties.Name="Aim curve"/>
+                    <Slider x:Name="AimCurveSlider" Margin="0,10,0,0" Minimum="0.3" Maximum="3" TickFrequency="0.1" IsSnapToTickEnabled="True" Value="{Binding Text, ElementName=AimCurve, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsEnabled, ElementName=AimCurve}" AutomationProperties.Name="Curve slider"/>
+                  </StackPanel>
+                </Grid>
+                <Grid Margin="0,0,0,18">
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Smoothing window"/><TextBlock Style="{StaticResource FieldHint}" Text="Mouse counts are averaged over this many milliseconds."/></StackPanel>
+                  <StackPanel Grid.Column="1" Width="260" HorizontalAlignment="Left" VerticalAlignment="Top">
+                    <Grid>
+                      <TextBox x:Name="AimWindow" Padding="11,0,44,0" AutomationProperties.Name="Aim smoothing window milliseconds"/>
+                      <TextBlock Style="{StaticResource Unit}" Text="ms" HorizontalAlignment="Right" Margin="0,0,13,0"/>
+                    </Grid>
+                    <Slider x:Name="AimWindowSlider" Margin="0,10,0,0" Minimum="2" Maximum="32" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding Text, ElementName=AimWindow, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsEnabled, ElementName=AimWindow}" AutomationProperties.Name="Smoothing window slider"/>
+                  </StackPanel>
+                </Grid>
+                <Grid Margin="0,0,0,18">
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Stop easing"/><TextBlock Style="{StaticResource FieldHint}" Text="After you stop, the stick eases back over this many milliseconds."/></StackPanel>
+                  <StackPanel Grid.Column="1" Width="260" HorizontalAlignment="Left" VerticalAlignment="Top">
+                    <Grid>
+                      <TextBox x:Name="AimTau" Padding="11,0,44,0" AutomationProperties.Name="Aim stop easing milliseconds"/>
+                      <TextBlock Style="{StaticResource Unit}" Text="ms" HorizontalAlignment="Right" Margin="0,0,13,0"/>
+                    </Grid>
+                    <Slider x:Name="AimTauSlider" Margin="0,10,0,0" Minimum="0" Maximum="50" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding Text, ElementName=AimTau, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsEnabled, ElementName=AimTau}" AutomationProperties.Name="Stop easing slider"/>
+                  </StackPanel>
+                </Grid>
+                <Grid>
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Release key"/><TextBlock Style="{StaticResource FieldHint}" Text="Press this key or Esc to end mouse capture."/></StackPanel>
+                  <ComboBox x:Name="AimRelease" Grid.Column="1" Width="260" HorizontalAlignment="Left" VerticalAlignment="Top" AutomationProperties.Name="Aim release key"/>
+                </Grid>
+              </StackPanel>
+            </Border>
+
+            <!-- Response and aim pad card -->
+            <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="4" Padding="22,18" Margin="0,16,0,0">
+              <StackPanel>
+                <Grid Margin="0,0,0,12">
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Response"/><TextBlock Style="{StaticResource FieldHint}" Text="Stick output for a steady mouse speed, drawn from the draft values."/></StackPanel>
+                </Grid>
+                <Canvas x:Name="ResponseGraph" Height="150" Margin="0,0,0,4"/>
+                <TextBlock FontSize="11" Foreground="{StaticResource Muted}" Text="Output vs mouse speed in counts per ms. The jump at the left edge is the deadzone floor." Margin="0,0,0,14"/>
+                <Grid>
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                  <Canvas x:Name="AimPad" Width="190" Height="190" Background="Transparent"/>
+                  <StackPanel Grid.Column="1" Margin="18,0,0,0" VerticalAlignment="Center">
+                    <TextBlock FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Muted}" Text="LOCAL AIM TEST"/>
+                    <TextBlock x:Name="AimSpeed" FontFamily="{StaticResource Mono}" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource Paper}" Margin="0,8,0,0"/>
+                    <TextBlock x:Name="AimStick" FontFamily="{StaticResource Mono}" FontSize="13" Foreground="{StaticResource Muted}" Margin="0,4,0,0"/>
+                    <TextBlock Style="{StaticResource Margin}" FontSize="12" Margin="0,12,0,0" Text="Click the pad to capture the mouse. Esc or the release key ends it. Input stays on this PC."/>
+                  </StackPanel>
+                </Grid>
+              </StackPanel>
+            </Border>
+
+            <!-- Key map card -->
+            <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="4" Padding="22,18" Margin="0,16,0,0">
+              <StackPanel>
+                <Grid Margin="0,0,0,12">
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Key map"/><TextBlock Style="{StaticResource FieldHint}" Text="Which key each PS5 button uses. chiaki-ng stores a key sequence per button."/></StackPanel>
+                  <Button x:Name="EditKeyMap" Grid.Column="2" Content="Edit in chiaki-ng" VerticalAlignment="Top" AutomationProperties.Name="Edit key map in chiaki-ng"/>
+                </Grid>
+                <UniformGrid x:Name="KeyMapGrid" Columns="2"/>
+              </StackPanel>
+            </Border>
+
+            <Border BorderBrush="{StaticResource Signal}" BorderThickness="2,0,0,0" Padding="14,2,0,2" Margin="0,16,0,0">
+              <TextBlock Style="{StaticResource Margin}" Text="Keyboard and mouse settings apply from the next session. The aim pad is a local preview only; it never sends input to the PS5."/>
+            </Border>
+          </StackPanel>
+        </ScrollViewer>
+      </TabItem>
     </TabControl>
 
     <!-- Shared footer: draft actions and the latest result -->

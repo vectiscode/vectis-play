@@ -27,6 +27,12 @@ internal sealed class Choice
 	}
 }
 
+internal sealed class KeyMapEntry
+{
+	public string Button;
+	public string Key;
+}
+
 internal static class StreamSettings
 {
 	internal const string RegistryPath = @"Software\Vectis\Vectis";
@@ -35,13 +41,21 @@ internal static class StreamSettings
 	private const int BytesPerMs = 192;
 	private const int NativeVolumeMax = 128;
 
-	internal static readonly string[] FieldOrder = new[] { "resolution", "rate", "bitrate", "codec", "decoder", "renderer", "window", "vsync", "volume", "buffer", "scaling", "mixer" };
+	internal static readonly string[] FieldOrder = new[]
+	{
+		"resolution", "rate", "bitrate", "codec", "decoder", "renderer", "window", "vsync", "volume", "buffer", "scaling", "mixer",
+		"keyboard", "walkkey", "walkscale", "mouseaim", "aimsens", "aimyratio", "aimdeadzone", "aimcurve", "aimwindow", "aimtau", "aimrelease"
+	};
 
 	internal static readonly Dictionary<string, string> FieldLabels = new Dictionary<string, string>
 	{
 		{ "resolution", "Resolution" }, { "rate", "Frame rate" }, { "bitrate", "Bitrate" }, { "codec", "Codec" },
 		{ "decoder", "Decoder" }, { "renderer", "Renderer" }, { "window", "Window mode" }, { "vsync", "VSync" },
-		{ "volume", "Volume" }, { "buffer", "Audio buffer" }, { "scaling", "Upscaling" }, { "mixer", "Frame mixer" }
+		{ "volume", "Volume" }, { "buffer", "Audio buffer" }, { "scaling", "Upscaling" }, { "mixer", "Frame mixer" },
+		{ "keyboard", "Keyboard" }, { "walkkey", "Walk key" }, { "walkscale", "Walk speed" },
+		{ "mouseaim", "Mouse aim" }, { "aimsens", "Sensitivity" }, { "aimyratio", "Vertical ratio" },
+		{ "aimdeadzone", "Deadzone" }, { "aimcurve", "Curve" }, { "aimwindow", "Smoothing window" },
+		{ "aimtau", "Stop easing" }, { "aimrelease", "Release key" }
 	};
 
 	internal static readonly Choice[] ResolutionChoices = { new Choice("360p", "360p"), new Choice("540p", "540p"), new Choice("720p", "720p"), new Choice("1080p", "1080p") };
@@ -66,6 +80,45 @@ internal static class StreamSettings
 	{
 		new Choice("direct", "Direct"), new Choice("queue", "Queue without blend"), new Choice("oversample", "Oversample"),
 		new Choice("hermite", "Hermite"), new Choice("linear", "Linear"), new Choice("cubic", "Cubic")
+	};
+
+	// Qt::Key values for the keys the workbench offers. Anything else stored in
+	// the registry shows as a native value and is left untouched.
+	internal static readonly Choice[] WalkKeyChoices =
+	{
+		new Choice("16777251", "Alt"), new Choice("16777249", "Ctrl"), new Choice("16777252", "Caps Lock"),
+		new Choice("67", "C"), new Choice("86", "V")
+	};
+	internal static readonly Choice[] AimReleaseChoices =
+	{
+		new Choice("16777271", "F8"), new Choice("16777272", "F9"), new Choice("16777273", "F10"),
+		new Choice("16777254", "Scroll Lock"), new Choice("16777224", "Pause")
+	};
+
+	// Upstream stores each PS5 button map as a QKeySequence string under
+	// keymap/<button name>, which is too rich for an in-app editor. The
+	// Controls tab shows this read-only table and hands editing to chiaki-ng.
+	// Columns: display name, registry value name, upstream default display.
+	private static readonly string[][] KeyMapRows =
+	{
+		new[] { "Cross", "cross", "Enter" },
+		new[] { "Moon", "moon", "Backspace" },
+		new[] { "Box", "box", "\\" },
+		new[] { "Pyramid", "pyramid", "C" },
+		new[] { "D-Pad Left", "d-pad_left", "Left" },
+		new[] { "D-Pad Right", "d-pad_right", "Right" },
+		new[] { "D-Pad Up", "d-pad_up", "Up" },
+		new[] { "D-Pad Down", "d-pad_down", "Down" },
+		new[] { "L1", "l1", "2" },
+		new[] { "R1", "r1", "3" },
+		new[] { "L3", "l3", "5" },
+		new[] { "R3", "r3", "6" },
+		new[] { "Options", "options", "O" },
+		new[] { "Share", "share", "F" },
+		new[] { "Touchpad", "touchpad", "T" },
+		new[] { "PS", "ps", "Esc" },
+		new[] { "L2", "l2", "1" },
+		new[] { "R2", "r2", "4" }
 	};
 
 	internal static List<ConsoleEntry> ReadConsoles()
@@ -143,6 +196,58 @@ internal static class StreamSettings
 		return Contains(choices, value) ? value : "~" + value;
 	}
 
+	private static bool TryDouble(string text, out double value)
+	{
+		return double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out value)
+			&& !double.IsNaN(value) && !double.IsInfinity(value);
+	}
+
+	// Reads a stored fraction (for example 0.45) and shows it as a percent
+	// string (45) for the draft fields that display percentages.
+	private static string ReadPercentField(string raw, double min, double max, string fallback)
+	{
+		if (raw == null)
+			return fallback;
+		double d;
+		if (!TryDouble(raw, out d) || d < min || d > max)
+			return NativeDisplay(raw);
+		return (d * 100.0).ToString("0.########", CultureInfo.InvariantCulture);
+	}
+
+	private static string ReadDoubleField(string raw, double min, double max, string fallback)
+	{
+		if (raw == null)
+			return fallback;
+		double d;
+		if (!TryDouble(raw, out d) || d < min || d > max)
+			return NativeDisplay(raw);
+		return d.ToString("0.########", CultureInfo.InvariantCulture);
+	}
+
+	private static string ReadIntField(string raw, int min, int max, string fallback)
+	{
+		if (raw == null)
+			return fallback;
+		int n = ToInt(raw, int.MinValue);
+		if (n == int.MinValue || n < min || n > max)
+			return NativeDisplay(raw);
+		return n.ToString(CultureInfo.InvariantCulture);
+	}
+
+	// Canonical stored form for the double fields: invariant string, up to 8
+	// decimals with trailing zeros trimmed so a saved draft reads back equal.
+	private static string CanonicalDouble(string text)
+	{
+		double d = double.Parse(text.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture);
+		return d.ToString("0.########", CultureInfo.InvariantCulture);
+	}
+
+	private static string CanonicalScaled(string text, double divisor)
+	{
+		double d = double.Parse(text.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture) / divisor;
+		return d.ToString("0.########", CultureInfo.InvariantCulture);
+	}
+
 	internal static string NativeDisplay(string value)
 	{
 		return "Native: " + value;
@@ -161,6 +266,8 @@ internal static class StreamSettings
 		string mixer = null;
 		string mapping = null;
 		string resolution = null, rate = null, bitrate = null, codec = null, decoder = null, renderer = null, window = null, vsync = null, volume = null, buffer = null;
+		string kbEnabled = null, walkKey = null, walkScale = null, aimEnabled = null;
+		string aimSens = null, aimYRatio = null, aimDeadzone = null, aimCurve = null, aimWindow = null, aimTau = null, aimRelease = null;
 		using (RegistryKey s = Registry.CurrentUser.OpenSubKey(RegistryPath + @"\settings", false))
 		{
 			if (s != null)
@@ -178,6 +285,17 @@ internal static class StreamSettings
 				preset = Str(s.GetValue("placebo_preset", null));
 				mixer = Str(s.GetValue("placebo_frame_mixer", null));
 				mapping = Str(s.GetValue("direct_frame_mapping", null));
+				kbEnabled = Str(s.GetValue("keyboard_enabled", null));
+				walkKey = Str(s.GetValue("keyboard_walk_key", null));
+				walkScale = Str(s.GetValue("keyboard_walk_scale", null));
+				aimEnabled = Str(s.GetValue("mouse_aim_enabled", null));
+				aimSens = Str(s.GetValue("mouse_aim_sensitivity", null));
+				aimYRatio = Str(s.GetValue("mouse_aim_y_ratio", null));
+				aimDeadzone = Str(s.GetValue("mouse_aim_deadzone", null));
+				aimCurve = Str(s.GetValue("mouse_aim_curve", null));
+				aimWindow = Str(s.GetValue("mouse_aim_window_ms", null));
+				aimTau = Str(s.GetValue("mouse_aim_stop_tau_ms", null));
+				aimRelease = Str(s.GetValue("mouse_aim_release_key", null));
 			}
 		}
 
@@ -234,7 +352,53 @@ internal static class StreamSettings
 			saved["mixer"] = mixerValue;
 		else
 			saved["mixer"] = "~" + mixerValue;
+
+		saved["keyboard"] = ParseBool(kbEnabled, true) ? "true" : "false";
+		saved["walkkey"] = KnownOrNative(WalkKeyChoices, walkKey ?? "16777251");
+		saved["walkscale"] = ReadPercentField(walkScale, 0.2, 0.8, "45");
+		saved["mouseaim"] = ParseBool(aimEnabled, false) ? "true" : "false";
+		saved["aimsens"] = ReadDoubleField(aimSens, 0.1, 5.0, "1");
+		saved["aimyratio"] = ReadDoubleField(aimYRatio, 0.25, 4.0, "1");
+		saved["aimdeadzone"] = ReadPercentField(aimDeadzone, 0.0, 0.5, "12");
+		saved["aimcurve"] = ReadDoubleField(aimCurve, 0.3, 3.0, "0.5");
+		saved["aimwindow"] = ReadIntField(aimWindow, 2, 32, "8");
+		saved["aimtau"] = ReadIntField(aimTau, 0, 50, "12");
+		saved["aimrelease"] = KnownOrNative(AimReleaseChoices, aimRelease ?? "16777271");
 		return saved;
+	}
+
+	// Read-only view of the upstream keymap table for the Controls tab. Stored
+	// QKeySequence strings are shown verbatim (first sequence only, matching
+	// how upstream reads them); absent values fall back to the upstream
+	// default key name.
+	internal static List<KeyMapEntry> ReadKeyMap()
+	{
+		List<KeyMapEntry> rows = new List<KeyMapEntry>();
+		Dictionary<string, string> stored = new Dictionary<string, string>();
+		using (RegistryKey s = Registry.CurrentUser.OpenSubKey(RegistryPath + @"\settings\keymap", false))
+		{
+			if (s != null)
+				foreach (string name in s.GetValueNames())
+				{
+					string text = Str(s.GetValue(name, null, RegistryValueOptions.DoNotExpandEnvironmentNames));
+					if (!string.IsNullOrWhiteSpace(text))
+						stored[name] = text.Trim();
+				}
+		}
+		foreach (string[] row in KeyMapRows)
+		{
+			string key;
+			if (stored.TryGetValue(row[1], out key))
+			{
+				int comma = key.IndexOf(',');
+				if (comma >= 0)
+					key = key.Substring(0, comma).Trim();
+				if (key.Length == 0)
+					key = null;
+			}
+			rows.Add(new KeyMapEntry { Button = row[0], Key = key ?? row[2] });
+		}
+		return rows;
 	}
 
 	internal static string SummaryChoice(Choice[] choices, string value)
@@ -272,9 +436,60 @@ internal static class StreamSettings
 				case "window":
 				case "scaling":
 				case "mixer":
+				case "walkkey":
+				case "aimrelease":
 					if (value.Length == 0)
 						return label + ": choose a value.";
 					break;
+				case "walkscale":
+					{
+						double n;
+						if (!TryDouble(value, out n) || n < 20 || n > 80)
+							return "Walk speed: enter a percentage from 20 to 80.";
+						break;
+					}
+				case "aimsens":
+					{
+						double n;
+						if (!TryDouble(value, out n) || n < 0.1 || n > 5)
+							return "Sensitivity: enter a number from 0.1 to 5.";
+						break;
+					}
+				case "aimyratio":
+					{
+						double n;
+						if (!TryDouble(value, out n) || n < 0.25 || n > 4)
+							return "Vertical ratio: enter a number from 0.25 to 4.";
+						break;
+					}
+				case "aimdeadzone":
+					{
+						double n;
+						if (!TryDouble(value, out n) || n < 0 || n > 50)
+							return "Deadzone: enter a percentage from 0 to 50.";
+						break;
+					}
+				case "aimcurve":
+					{
+						double n;
+						if (!TryDouble(value, out n) || n < 0.3 || n > 3)
+							return "Curve: enter a number from 0.3 to 3.";
+						break;
+					}
+				case "aimwindow":
+					{
+						int n;
+						if (!int.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out n) || n < 2 || n > 32)
+							return "Smoothing window: enter whole milliseconds from 2 to 32.";
+						break;
+					}
+				case "aimtau":
+					{
+						int n;
+						if (!int.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out n) || n < 0 || n > 50)
+							return "Stop easing: enter whole milliseconds from 0 to 50.";
+						break;
+					}
 				case "bitrate":
 					{
 						int n;
@@ -363,6 +578,39 @@ internal static class StreamSettings
 							s.SetValue("placebo_frame_mixer", value == "queue" ? "none" : value);
 							s.SetValue("direct_frame_mapping", "false");
 						}
+						break;
+					case "keyboard":
+						s.SetValue("keyboard_enabled", value);
+						break;
+					case "walkkey":
+						s.SetValue("keyboard_walk_key", int.Parse(value, CultureInfo.InvariantCulture), RegistryValueKind.DWord);
+						break;
+					case "walkscale":
+						s.SetValue("keyboard_walk_scale", CanonicalScaled(value, 100.0));
+						break;
+					case "mouseaim":
+						s.SetValue("mouse_aim_enabled", value);
+						break;
+					case "aimsens":
+						s.SetValue("mouse_aim_sensitivity", CanonicalDouble(value));
+						break;
+					case "aimyratio":
+						s.SetValue("mouse_aim_y_ratio", CanonicalDouble(value));
+						break;
+					case "aimdeadzone":
+						s.SetValue("mouse_aim_deadzone", CanonicalScaled(value, 100.0));
+						break;
+					case "aimcurve":
+						s.SetValue("mouse_aim_curve", CanonicalDouble(value));
+						break;
+					case "aimwindow":
+						s.SetValue("mouse_aim_window_ms", int.Parse(value, CultureInfo.InvariantCulture), RegistryValueKind.DWord);
+						break;
+					case "aimtau":
+						s.SetValue("mouse_aim_stop_tau_ms", int.Parse(value, CultureInfo.InvariantCulture), RegistryValueKind.DWord);
+						break;
+					case "aimrelease":
+						s.SetValue("mouse_aim_release_key", int.Parse(value, CultureInfo.InvariantCulture), RegistryValueKind.DWord);
 						break;
 				}
 			}
