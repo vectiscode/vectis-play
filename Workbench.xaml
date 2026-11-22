@@ -634,6 +634,78 @@
                 </Grid>
               </StackPanel>
             </Border>
+            <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="4" Padding="22,18" Margin="0,16,0,0">
+              <StackPanel>
+                <StackPanel Margin="0,0,0,16">
+                  <TextBlock Style="{StaticResource Eyebrow}" Text="COLOR GRADE"/>
+                  <TextBlock Style="{StaticResource FieldHint}" Text="Optional display grade applied by the player on the GPU. Neutral values do nothing." Margin="0,2,0,0"/>
+                </StackPanel>
+                <Grid Margin="0,0,0,18">
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Saturation"/><TextBlock Style="{StaticResource FieldHint}" Text="100 is unchanged."/></StackPanel>
+                  <StackPanel Grid.Column="1" Width="200" HorizontalAlignment="Left" VerticalAlignment="Top">
+                    <Grid>
+                      <TextBox x:Name="ColorSat" Padding="11,0,40,0" AutomationProperties.Name="Color saturation percent"/>
+                      <TextBlock Style="{StaticResource Unit}" Text="%" HorizontalAlignment="Right" Margin="0,0,15,0"/>
+                    </Grid>
+                    <Slider x:Name="ColorSatSlider" Margin="0,10,0,0" Minimum="0" Maximum="200" TickFrequency="10" IsSnapToTickEnabled="True" Value="{Binding Text, ElementName=ColorSat, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsEnabled, ElementName=ColorSat}" AutomationProperties.Name="Saturation slider"/>
+                  </StackPanel>
+                </Grid>
+                <Grid Margin="0,0,0,18">
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Vibrance"/><TextBlock Style="{StaticResource FieldHint}" Text="Lifts muted colors, leaves skin tones alone."/></StackPanel>
+                  <StackPanel Grid.Column="1" Width="200" HorizontalAlignment="Left" VerticalAlignment="Top">
+                    <Grid>
+                      <TextBox x:Name="ColorVib" Padding="11,0,40,0" AutomationProperties.Name="Color vibrance"/>
+                      <TextBlock Style="{StaticResource Unit}" Text="%" HorizontalAlignment="Right" Margin="0,0,15,0"/>
+                    </Grid>
+                    <Slider x:Name="ColorVibSlider" Margin="0,10,0,0" Minimum="-100" Maximum="100" TickFrequency="10" IsSnapToTickEnabled="True" Value="{Binding Text, ElementName=ColorVib, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsEnabled, ElementName=ColorVib}" AutomationProperties.Name="Vibrance slider"/>
+                  </StackPanel>
+                </Grid>
+                <Grid Margin="0,0,0,18">
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Contrast"/><TextBlock Style="{StaticResource FieldHint}" Text="Separates darks and lights around the picture's average."/></StackPanel>
+                  <StackPanel Grid.Column="1" Width="200" HorizontalAlignment="Left" VerticalAlignment="Top">
+                    <Grid>
+                      <TextBox x:Name="ColorCon" Padding="11,0,40,0" AutomationProperties.Name="Color contrast percent"/>
+                      <TextBlock Style="{StaticResource Unit}" Text="%" HorizontalAlignment="Right" Margin="0,0,15,0"/>
+                    </Grid>
+                    <Slider x:Name="ColorConSlider" Margin="0,10,0,0" Minimum="50" Maximum="200" TickFrequency="10" IsSnapToTickEnabled="True" Value="{Binding Text, ElementName=ColorCon, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsEnabled, ElementName=ColorCon}" AutomationProperties.Name="Contrast slider"/>
+                  </StackPanel>
+                </Grid>
+                <Grid Margin="0,0,0,18">
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Brightness"/><TextBlock Style="{StaticResource FieldHint}" Text="Lifts or lowers the whole picture."/></StackPanel>
+                  <StackPanel Grid.Column="1" Width="200" HorizontalAlignment="Left" VerticalAlignment="Top">
+                    <Grid>
+                      <TextBox x:Name="ColorBri" Padding="11,0,40,0" AutomationProperties.Name="Color brightness percent"/>
+                      <TextBlock Style="{StaticResource Unit}" Text="%" HorizontalAlignment="Right" Margin="0,0,15,0"/>
+                    </Grid>
+                    <Slider x:Name="ColorBriSlider" Margin="0,10,0,0" Minimum="-50" Maximum="50" TickFrequency="5" IsSnapToTickEnabled="True" Value="{Binding Text, ElementName=ColorBri, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsEnabled, ElementName=ColorBri}" AutomationProperties.Name="Brightness slider"/>
+                  </StackPanel>
+                </Grid>
+                <Grid Margin="0,0,0,18">
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Temperature"/><TextBlock Style="{StaticResource FieldHint}" Text="Warm toward orange, cool toward blue."/></StackPanel>
+                  <StackPanel Grid.Column="1" Width="200" HorizontalAlignment="Left" VerticalAlignment="Top">
+                    <Grid>
+                      <TextBox x:Name="ColorTemp" Padding="11,0,0,0" AutomationProperties.Name="Color temperature"/>
+                    </Grid>
+                    <Slider x:Name="ColorTempSlider" Margin="0,10,0,0" Minimum="-100" Maximum="100" TickFrequency="10" IsSnapToTickEnabled="True" Value="{Binding Text, ElementName=ColorTemp, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsEnabled, ElementName=ColorTemp}" AutomationProperties.Name="Temperature slider"/>
+                  </StackPanel>
+                </Grid>
+                <Grid>
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Tint"/><TextBlock Style="{StaticResource FieldHint}" Text="Shift toward magenta or green."/></StackPanel>
+                  <StackPanel Grid.Column="1" Width="200" HorizontalAlignment="Left" VerticalAlignment="Top">
+                    <Grid>
+                      <TextBox x:Name="ColorTint" Padding="11,0,0,0" AutomationProperties.Name="Color tint"/>
+                    </Grid>
+                    <Slider x:Name="ColorTintSlider" Margin="0,10,0,0" Minimum="-100" Maximum="100" TickFrequency="10" IsSnapToTickEnabled="True" Value="{Binding Text, ElementName=ColorTint, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsEnabled, ElementName=ColorTint}" AutomationProperties.Name="Tint slider"/>
+                  </StackPanel>
+                </Grid>
+              </StackPanel>
+            </Border>
           </StackPanel>
         </ScrollViewer>
       </TabItem>

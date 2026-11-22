@@ -1,0 +1,187 @@
+diff --git a/gui/include/qmlmainwindow.h b/gui/include/qmlmainwindow.h
+index 47faada..b1a4a2d 100644
+--- a/gui/include/qmlmainwindow.h
++++ b/gui/include/qmlmainwindow.h
+@@ -162,6 +162,7 @@ public:
+ public slots:
+     void resetPlaceboQueue();
+     void schedulePlaceboReset();
++    void updateColorHook();
+     void queuePlaceboReset(bool preserve_timeline);
+ 
+     void updatePlacebo();
+@@ -472,6 +473,13 @@ private:
+     const struct pl_hook *fsr_hook = nullptr;
+     const struct pl_hook *fsrcnnx_hook_8 = nullptr;
+     const struct pl_hook *fsrcnnx_hook_16 = nullptr;
++    const struct pl_hook *color_hook = nullptr;
++    double color_grade_saturation = -1.0;
++    double color_grade_vibrance = -1.0;
++    double color_grade_contrast = -1.0;
++    double color_grade_brightness = -1.0;
++    double color_grade_temperature = -1.0;
++    double color_grade_tint = -1.0;
+ 
+     struct {
+         PFN_vkGetDeviceProcAddr vkGetDeviceProcAddr;
+diff --git a/gui/include/settings.h b/gui/include/settings.h
+index 8848920..6cbe36e 100644
+--- a/gui/include/settings.h
++++ b/gui/include/settings.h
+@@ -376,6 +376,13 @@ class Settings : public QObject
+ 		PlaceboPreset GetPlaceboPreset() const;
+ 		void SetPlaceboPreset(PlaceboPreset preset);
+ 
++		double GetColorSaturation() const;
++		double GetColorVibrance() const;
++		double GetColorContrast() const;
++		double GetColorBrightness() const;
++		double GetColorTemperature() const;
++		double GetColorTint() const;
++
+ 		RenderBackend GetRenderBackend() const;
+ 		void SetRenderBackend(RenderBackend backend);
+ 		// Set while Vulkan starts up and cleared once it has shown a frame, so a launch that
+diff --git a/gui/src/qmlmainwindow.cpp b/gui/src/qmlmainwindow.cpp
+index 320160b..34418fe 100644
+--- a/gui/src/qmlmainwindow.cpp
++++ b/gui/src/qmlmainwindow.cpp
+@@ -2684,6 +2684,7 @@ QmlMainWindow::~QmlMainWindow()
+     pl_mpv_user_shader_destroy(&fsr_hook);
+     pl_mpv_user_shader_destroy(&fsrcnnx_hook_8);
+     pl_mpv_user_shader_destroy(&fsrcnnx_hook_16);
++    pl_mpv_user_shader_destroy(&color_hook);
+     if (render_backend == RenderBackend::Vulkan) {
+         pl_vulkan_destroy(&placebo_vulkan);
+         pl_vk_inst_destroy(&placebo_vk_inst);
+@@ -6466,6 +6467,67 @@ void QmlMainWindow::handleVulkanRendererFallback(const QString &title, const QSt
+     }, Qt::QueuedConnection);
+ }
+ 
++void QmlMainWindow::updateColorHook()
++{
++    const double saturation = settings->GetColorSaturation();
++    const double vibrance = settings->GetColorVibrance();
++    const double contrast = settings->GetColorContrast();
++    const double brightness = settings->GetColorBrightness();
++    const double temperature = settings->GetColorTemperature();
++    const double tint = settings->GetColorTint();
++    if (color_hook
++            && color_grade_saturation == saturation && color_grade_vibrance == vibrance
++            && color_grade_contrast == contrast && color_grade_brightness == brightness
++            && color_grade_temperature == temperature && color_grade_tint == tint)
++        return;
++    if (color_hook)
++    {
++        pl_mpv_user_shader_destroy(&color_hook);
++        color_hook = nullptr;
++    }
++    color_grade_saturation = saturation;
++    color_grade_vibrance = vibrance;
++    color_grade_contrast = contrast;
++    color_grade_brightness = brightness;
++    color_grade_temperature = temperature;
++    color_grade_tint = tint;
++    const bool neutral = saturation == 1.0 && vibrance == 0.0 && contrast == 1.0
++            && brightness == 0.0 && temperature == 0.0 && tint == 0.0;
++    if (neutral)
++        return;
++    const auto num = [](double v) { return QString::number(v, 'f', 6); };
++    const QString src = QStringLiteral(
++        "//!HOOK OUTPUT\n"
++        "//!BIND HOOKED\n"
++        "//!DESC Vectis color grade\n"
++        "\n"
++        "vec4 hook()\n"
++        "{\n"
++        "    vec4 c = HOOKED_tex(HOOKED_pos);\n"
++        "    vec3 rgb = clamp(c.rgb, 0.0, 1.0);\n"
++        "    rgb.r *= 1.0 + %1 * 0.15;\n"
++        "    rgb.b *= 1.0 - %1 * 0.15;\n"
++        "    rgb.g *= 1.0 - %2 * 0.15;\n"
++        "    rgb += vec3(%3);\n"
++        "    float luma = dot(rgb, vec3(0.2126, 0.7152, 0.0722));\n"
++        "    rgb = (rgb - luma) * %4 + luma;\n"
++        "    luma = dot(rgb, vec3(0.2126, 0.7152, 0.0722));\n"
++        "    float mx = max(rgb.r, max(rgb.g, rgb.b));\n"
++        "    float mn = min(rgb.r, min(rgb.g, rgb.b));\n"
++        "    float chroma = mx - mn;\n"
++        "    float amount = %5 + %6 * (1.0 - chroma);\n"
++        "    rgb = mix(vec3(luma), rgb, clamp(amount, 0.0, 4.0));\n"
++        "    c.rgb = clamp(rgb, 0.0, 1.0);\n"
++        "    return c;\n"
++        "}\n")
++        .arg(num(temperature)).arg(num(tint)).arg(num(brightness))
++        .arg(num(contrast)).arg(num(saturation)).arg(num(vibrance));
++    const QByteArray bytes = src.toUtf8();
++    color_hook = pl_mpv_user_shader_parse(placeboGpu(), bytes.constData(), static_cast<size_t>(bytes.size()));
++    if (!color_hook)
++        qCWarning(chiakiGui) << "Failed to parse color grade shader";
++}
++
+ void QmlMainWindow::render()
+ {
+     Q_ASSERT(QThread::currentThread() == render_thread);
+@@ -7555,10 +7617,18 @@ void QmlMainWindow::render()
+                                                fsr_hook, fsrcnnx_hook_8, fsrcnnx_hook_16);
+         }
+     }
+-    const struct pl_hook *active_hooks[] = {fsrcnnx_hook};
+-    if (fsrcnnx_hook) {
++    updateColorHook();
++    const struct pl_hook *active_hooks[2];
++    int num_active_hooks = 0;
++    if (fsrcnnx_hook)
++        active_hooks[num_active_hooks++] = fsrcnnx_hook;
++    if (color_hook)
++        active_hooks[num_active_hooks++] = color_hook;
++    if (num_active_hooks > 0) {
+         params.hooks = active_hooks;
+-        params.num_hooks = 1;
++        params.num_hooks = num_active_hooks;
++    }
++    if (fsrcnnx_hook) {
+         switch (video_preset) {
+         case VideoPreset::HighQualitySpatial:
+             if (fsrcnnx_hook == fsr_hook)
+diff --git a/gui/src/settings.cpp b/gui/src/settings.cpp
+index 1b572ba..f379eb6 100644
+--- a/gui/src/settings.cpp
++++ b/gui/src/settings.cpp
+@@ -1248,6 +1248,36 @@ void Settings::SetDisconnectAction(DisconnectAction action)
+ 	settings.setValue("settings/disconnect_action", disconnect_action_values[action]);
+ }
+ 
++double Settings::GetColorSaturation() const
++{
++	return qBound(0.0, settings.value("settings/color_saturation", 1.0).toDouble(), 2.0);
++}
++
++double Settings::GetColorVibrance() const
++{
++	return qBound(-1.0, settings.value("settings/color_vibrance", 0.0).toDouble(), 1.0);
++}
++
++double Settings::GetColorContrast() const
++{
++	return qBound(0.5, settings.value("settings/color_contrast", 1.0).toDouble(), 2.0);
++}
++
++double Settings::GetColorBrightness() const
++{
++	return qBound(-0.5, settings.value("settings/color_brightness", 0.0).toDouble(), 0.5);
++}
++
++double Settings::GetColorTemperature() const
++{
++	return qBound(-1.0, settings.value("settings/color_temperature", 0.0).toDouble(), 1.0);
++}
++
++double Settings::GetColorTint() const
++{
++	return qBound(-1.0, settings.value("settings/color_tint", 0.0).toDouble(), 1.0);
++}
++
+ static const QMap<SuspendAction, QString> suspend_action_values = {
+ 	{ SuspendAction::Sleep, "sleep" },
+ 	{ SuspendAction::Nothing, "nothing" },

@@ -72,6 +72,12 @@ internal sealed class Controller : IDisposable
 	private readonly TextBox _aimWindow;
 	private readonly TextBox _aimTau;
 	private readonly ComboBox _aimRelease;
+	private readonly TextBox _colorSat;
+	private readonly TextBox _colorVib;
+	private readonly TextBox _colorCon;
+	private readonly TextBox _colorBri;
+	private readonly TextBox _colorTemp;
+	private readonly TextBox _colorTint;
 	private readonly UniformGrid _keyMapGrid;
 	private readonly AimPad _aimPad;
 	private readonly List<Control> _settingControls = new List<Control>();
@@ -152,12 +158,18 @@ internal sealed class Controller : IDisposable
 		_aimWindow = Part<TextBox>("AimWindow");
 		_aimTau = Part<TextBox>("AimTau");
 		_aimRelease = Part<ComboBox>("AimRelease");
+		_colorSat = Part<TextBox>("ColorSat");
+		_colorVib = Part<TextBox>("ColorVib");
+		_colorCon = Part<TextBox>("ColorCon");
+		_colorBri = Part<TextBox>("ColorBri");
+		_colorTemp = Part<TextBox>("ColorTemp");
+		_colorTint = Part<TextBox>("ColorTint");
 		_keyMapGrid = Part<UniformGrid>("KeyMapGrid");
 		_aimPad = new AimPad(_win,
 			Part<Canvas>("ResponseGraph"), Part<Canvas>("AimPad"),
 			Part<TextBlock>("AimSpeed"), Part<TextBlock>("AimStick"));
 
-		_settingControls.AddRange(new Control[] { _vsync, _resolution, _rate, _codec, _decoder, _renderer, _scaling, _mixer, _windowMode, _bitrate, _volume, _audioBuffer, _keyboardEnabled, _walkKey, _walkScale, _mouseAim });
+		_settingControls.AddRange(new Control[] { _vsync, _resolution, _rate, _codec, _decoder, _renderer, _scaling, _mixer, _windowMode, _bitrate, _volume, _audioBuffer, _keyboardEnabled, _walkKey, _walkScale, _mouseAim, _colorSat, _colorVib, _colorCon, _colorBri, _colorTemp, _colorTint });
 		_aimControls.AddRange(new Control[] { _aimSensitivity, _aimYRatio, _aimDeadzone, _aimCurve, _aimWindow, _aimTau, _aimRelease });
 		_fieldControls["resolution"] = _resolution;
 		_fieldControls["rate"] = _rate;
@@ -182,6 +194,12 @@ internal sealed class Controller : IDisposable
 		_fieldControls["aimwindow"] = _aimWindow;
 		_fieldControls["aimtau"] = _aimTau;
 		_fieldControls["aimrelease"] = _aimRelease;
+		_fieldControls["colorsat"] = _colorSat;
+		_fieldControls["colorvib"] = _colorVib;
+		_fieldControls["colorcon"] = _colorCon;
+		_fieldControls["colorbri"] = _colorBri;
+		_fieldControls["colortemp"] = _colorTemp;
+		_fieldControls["colortint"] = _colorTint;
 
 		_win.ResizeMode = ResizeMode.CanResize;
 		_win.Closing += OnWindowClosing;
@@ -215,7 +233,7 @@ internal sealed class Controller : IDisposable
 		ComboBox[] combos = { _resolution, _rate, _codec, _decoder, _renderer, _scaling, _mixer, _windowMode, _walkKey, _aimRelease };
 		foreach (ComboBox combo in combos)
 			combo.SelectionChanged += delegate { OnDraftChanged(); };
-		TextBox[] boxes = { _bitrate, _volume, _audioBuffer, _walkScale, _aimSensitivity, _aimYRatio, _aimDeadzone, _aimCurve, _aimWindow, _aimTau };
+		TextBox[] boxes = { _bitrate, _volume, _audioBuffer, _walkScale, _aimSensitivity, _aimYRatio, _aimDeadzone, _aimCurve, _aimWindow, _aimTau, _colorSat, _colorVib, _colorCon, _colorBri, _colorTemp, _colorTint };
 		foreach (TextBox box in boxes)
 			box.TextChanged += delegate { OnDraftChanged(); };
 		_vsync.Checked += delegate { OnDraftChanged(); };
@@ -701,6 +719,12 @@ internal sealed class Controller : IDisposable
 			_aimCurve.Text = saved["aimcurve"];
 			_aimWindow.Text = saved["aimwindow"];
 			_aimTau.Text = saved["aimtau"];
+			_colorSat.Text = saved["colorsat"];
+			_colorVib.Text = saved["colorvib"];
+			_colorCon.Text = saved["colorcon"];
+			_colorBri.Text = saved["colorbri"];
+			_colorTemp.Text = saved["colortemp"];
+			_colorTint.Text = saved["colortint"];
 			LoadKeyMap();
 			_aimPad.SyncFrom(saved);
 			_sumResolution.Text = StreamSettings.SummaryChoice(StreamSettings.ResolutionChoices, saved["resolution"]);
@@ -817,6 +841,12 @@ internal sealed class Controller : IDisposable
 		ui["aimwindow"] = (_aimWindow.Text ?? string.Empty).Trim();
 		ui["aimtau"] = (_aimTau.Text ?? string.Empty).Trim();
 		ui["aimrelease"] = ComboValue(_aimRelease);
+		ui["colorsat"] = (_colorSat.Text ?? string.Empty).Trim();
+		ui["colorvib"] = (_colorVib.Text ?? string.Empty).Trim();
+		ui["colorcon"] = (_colorCon.Text ?? string.Empty).Trim();
+		ui["colorbri"] = (_colorBri.Text ?? string.Empty).Trim();
+		ui["colortemp"] = (_colorTemp.Text ?? string.Empty).Trim();
+		ui["colortint"] = (_colorTint.Text ?? string.Empty).Trim();
 		return ui;
 	}
 

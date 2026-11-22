@@ -44,7 +44,8 @@ internal static class StreamSettings
 	internal static readonly string[] FieldOrder = new[]
 	{
 		"resolution", "rate", "bitrate", "codec", "decoder", "renderer", "window", "vsync", "volume", "buffer", "scaling", "mixer",
-		"keyboard", "walkkey", "walkscale", "mouseaim", "aimsens", "aimyratio", "aimdeadzone", "aimcurve", "aimwindow", "aimtau", "aimrelease"
+		"keyboard", "walkkey", "walkscale", "mouseaim", "aimsens", "aimyratio", "aimdeadzone", "aimcurve", "aimwindow", "aimtau", "aimrelease",
+		"colorsat", "colorvib", "colorcon", "colorbri", "colortemp", "colortint"
 	};
 
 	internal static readonly Dictionary<string, string> FieldLabels = new Dictionary<string, string>
@@ -55,7 +56,9 @@ internal static class StreamSettings
 		{ "keyboard", "Keyboard" }, { "walkkey", "Walk key" }, { "walkscale", "Walk speed" },
 		{ "mouseaim", "Mouse aim" }, { "aimsens", "Sensitivity" }, { "aimyratio", "Vertical ratio" },
 		{ "aimdeadzone", "Deadzone" }, { "aimcurve", "Curve" }, { "aimwindow", "Smoothing window" },
-		{ "aimtau", "Stop easing" }, { "aimrelease", "Release key" }
+		{ "aimtau", "Stop easing" }, { "aimrelease", "Release key" },
+		{ "colorsat", "Saturation" }, { "colorvib", "Vibrance" }, { "colorcon", "Contrast" },
+		{ "colorbri", "Brightness" }, { "colortemp", "Temperature" }, { "colortint", "Tint" }
 	};
 
 	internal static readonly Choice[] ResolutionChoices = { new Choice("360p", "360p"), new Choice("540p", "540p"), new Choice("720p", "720p"), new Choice("1080p", "1080p") };
@@ -289,6 +292,7 @@ internal static class StreamSettings
 		string resolution = null, rate = null, bitrate = null, codec = null, decoder = null, renderer = null, window = null, vsync = null, volume = null, buffer = null;
 		string kbEnabled = null, walkKey = null, walkScale = null, aimEnabled = null;
 		string aimSens = null, aimYRatio = null, aimDeadzone = null, aimCurve = null, aimWindow = null, aimTau = null, aimRelease = null;
+		string colorSat = null, colorVib = null, colorCon = null, colorBri = null, colorTemp = null, colorTint = null;
 		using (RegistryKey s = Registry.CurrentUser.OpenSubKey(RegistryPath + @"\settings", false))
 		{
 			if (s != null)
@@ -317,6 +321,12 @@ internal static class StreamSettings
 				aimWindow = Str(s.GetValue("mouse_aim_window_ms", null));
 				aimTau = Str(s.GetValue("mouse_aim_stop_tau_ms", null));
 				aimRelease = Str(s.GetValue("mouse_aim_release_key", null));
+				colorSat = Str(s.GetValue("color_saturation", null));
+				colorVib = Str(s.GetValue("color_vibrance", null));
+				colorCon = Str(s.GetValue("color_contrast", null));
+				colorBri = Str(s.GetValue("color_brightness", null));
+				colorTemp = Str(s.GetValue("color_temperature", null));
+				colorTint = Str(s.GetValue("color_tint", null));
 			}
 		}
 
@@ -385,6 +395,12 @@ internal static class StreamSettings
 		saved["aimwindow"] = ReadIntField(aimWindow, 2, 32, "8");
 		saved["aimtau"] = ReadIntField(aimTau, 0, 50, "12");
 		saved["aimrelease"] = KnownOrNative(AimReleaseChoices, aimRelease ?? "16777271");
+		saved["colorsat"] = ReadPercentField(colorSat, 0.0, 2.0, "100");
+		saved["colorvib"] = ReadPercentField(colorVib, -1.0, 1.0, "0");
+		saved["colorcon"] = ReadPercentField(colorCon, 0.5, 2.0, "100");
+		saved["colorbri"] = ReadPercentField(colorBri, -0.5, 0.5, "0");
+		saved["colortemp"] = ReadPercentField(colorTemp, -1.0, 1.0, "0");
+		saved["colortint"] = ReadPercentField(colorTint, -1.0, 1.0, "0");
 		return saved;
 	}
 
@@ -511,6 +527,42 @@ internal static class StreamSettings
 							return "Stop easing: enter whole milliseconds from 0 to 50.";
 						break;
 					}
+				case "colorsat":
+					{
+						double n;
+						if (!TryDouble(value, out n) || n < 0 || n > 200)
+							return "Saturation: enter a percentage from 0 to 200.";
+						break;
+					}
+				case "colorvib":
+					{
+						double n;
+						if (!TryDouble(value, out n) || n < -100 || n > 100)
+							return "Vibrance: enter a percentage from -100 to 100.";
+						break;
+					}
+				case "colorcon":
+					{
+						double n;
+						if (!TryDouble(value, out n) || n < 50 || n > 200)
+							return "Contrast: enter a percentage from 50 to 200.";
+						break;
+					}
+				case "colorbri":
+					{
+						double n;
+						if (!TryDouble(value, out n) || n < -50 || n > 50)
+							return "Brightness: enter a percentage from -50 to 50.";
+						break;
+					}
+				case "colortemp":
+				case "colortint":
+					{
+						double n;
+						if (!TryDouble(value, out n) || n < -100 || n > 100)
+							return FieldLabels[id] + ": enter a number from -100 to 100.";
+						break;
+					}
 				case "bitrate":
 					{
 						int n;
@@ -632,6 +684,24 @@ internal static class StreamSettings
 						break;
 					case "aimrelease":
 						s.SetValue("mouse_aim_release_key", int.Parse(value, CultureInfo.InvariantCulture), RegistryValueKind.DWord);
+						break;
+					case "colorsat":
+						s.SetValue("color_saturation", CanonicalScaled(value, 100.0));
+						break;
+					case "colorvib":
+						s.SetValue("color_vibrance", CanonicalScaled(value, 100.0));
+						break;
+					case "colorcon":
+						s.SetValue("color_contrast", CanonicalScaled(value, 100.0));
+						break;
+					case "colorbri":
+						s.SetValue("color_brightness", CanonicalScaled(value, 100.0));
+						break;
+					case "colortemp":
+						s.SetValue("color_temperature", CanonicalScaled(value, 100.0));
+						break;
+					case "colortint":
+						s.SetValue("color_tint", CanonicalScaled(value, 100.0));
 						break;
 				}
 			}
