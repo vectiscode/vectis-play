@@ -13,10 +13,10 @@ index 7e777e1..fec9d21 100755
  	)
 diff --git a/gui/include/mouseaim.h b/gui/include/mouseaim.h
 new file mode 100644
-index 0000000..8350337
+index 0000000..b590292
 --- /dev/null
 +++ b/gui/include/mouseaim.h
-@@ -0,0 +1,51 @@
+@@ -0,0 +1,57 @@
 +// SPDX-License-Identifier: LicenseRef-AGPL-3.0-only-OpenSSL
 +
 +#pragma once
@@ -34,9 +34,11 @@ index 0000000..8350337
 +{
 +	bool enabled = false;
 +	double sensitivity = 1.0;
-+	double deadzone = 0.10;
-+	double curve = 1.0;
++	double deadzone = 0.12;
++	double curve = 0.5;
 +	int window_ms = 8;
++	int stop_tau_ms = 12;
++	double y_ratio = 1.0;
 +	int release_key = Qt::Key_F8;
 +};
 +
@@ -52,16 +54,20 @@ index 0000000..8350337
 +		bool nativeEventFilter(const QByteArray &type, void *message, qintptr *) override;
 +		void Capture();
 +		void Release();
-+		void ResetMotion();
 +		void Update(qint64 now, long dx, long dy);
++		void Flush(qint64 now, bool button_edge = false);
 +
 +		QWindow &window;
 +		QPointer<StreamSession> session;
 +		const MouseAimConfig config;
 +		bool captured = false, released = false, blocked = false;
 +		Qt::MouseButtons buttons;
-+		QTimer stop_timer;
-+		qint64 window_ticks;
++		QTimer pace_timer;
++		qint64 window_ticks, last_motion = 0;
++		double tau_ticks;
++		bool engaged = false;
++		double target_x = 0.0, target_y = 0.0;
++		qint16 sent_x = 0, sent_y = 0;
 +		struct Sample { qint64 t; long dx, dy; };
 +		std::vector<Sample> ring;
 +		size_t head = 0, count = 0;
@@ -94,10 +100,10 @@ index 5a54616..47faada 100644
      bool is_window_adjustable = false;
      bool is_stream_window_adjustable = false;
 diff --git a/gui/include/settings.h b/gui/include/settings.h
-index be03e9e..fa611da 100644
+index be03e9e..fefe1f0 100644
 --- a/gui/include/settings.h
 +++ b/gui/include/settings.h
-@@ -443,6 +443,21 @@ class Settings : public QObject
+@@ -443,6 +443,25 @@ class Settings : public QObject
  		bool GetMouseTouchEnabled() const;
  		void SetMouseTouchEnabled(bool enabled);
  
@@ -112,6 +118,10 @@ index be03e9e..fa611da 100644
 +		void SetMouseAimCurve(double curve);
 +		int GetMouseAimWindowMs() const;
 +		void SetMouseAimWindowMs(int ms);
++		int GetMouseAimStopTauMs() const;
++		void SetMouseAimStopTauMs(int ms);
++		double GetMouseAimYRatio() const;
++		void SetMouseAimYRatio(double ratio);
 +		int GetMouseAimReleaseKey() const;
 +		void SetMouseAimReleaseKey(int key);
 +#endif
@@ -166,10 +176,10 @@ index 52439ce..8802ff2 100755
  #endif
 diff --git a/gui/src/mouseaim.cpp b/gui/src/mouseaim.cpp
 new file mode 100644
-index 0000000..f90e8cc
+index 0000000..bcf8bd8
 --- /dev/null
 +++ b/gui/src/mouseaim.cpp
-@@ -0,0 +1,214 @@
+@@ -0,0 +1,254 @@
 +// SPDX-License-Identifier: LicenseRef-AGPL-3.0-only-OpenSSL
 +
 +#include "mouseaim.h"
@@ -193,16 +203,24 @@ index 0000000..f90e8cc
 +		&& ClipCursor(&rect);
 +}
 +
++static qint64 CounterNow()
++{
++	LARGE_INTEGER now;
++	QueryPerformanceCounter(&now);
++	return now.QuadPart;
++}
++
 +MouseAim::MouseAim(QWindow &window, StreamSession &session)
 +	: window(window), session(&session), config(session.mouse_aim_config), ring(64)
 +{
 +	LARGE_INTEGER frequency;
 +	QueryPerformanceFrequency(&frequency);
 +	window_ticks = (frequency.QuadPart * config.window_ms + 999) / 1000;
-+	stop_timer.setSingleShot(true);
-+	stop_timer.setTimerType(Qt::PreciseTimer);
-+	stop_timer.setInterval(config.window_ms);
-+	connect(&stop_timer, &QTimer::timeout, this, &MouseAim::ResetMotion);
++	tau_ticks = frequency.QuadPart * (config.stop_tau_ms / 1000.0);
++	pace_timer.setSingleShot(true);
++	pace_timer.setTimerType(Qt::PreciseTimer);
++	pace_timer.setInterval(2);
++	connect(&pace_timer, &QTimer::timeout, this, [this]() { Flush(CounterNow()); });
 +	window.installEventFilter(this);
 +	qGuiApp->installNativeEventFilter(this);
 +	window.setCursor(Qt::ArrowCursor);
@@ -250,9 +268,15 @@ index 0000000..f90e8cc
 +		qWarning("Mouse aim: raw input removal failed (%lu)", GetLastError());
 +	ClipCursor(nullptr);
 +	window.setCursor(Qt::ArrowCursor);
-+	stop_timer.stop();
++	pace_timer.stop();
 +	buttons = {};
-+	ResetMotion();
++	engaged = false;
++	head = count = 0;
++	sum_x = sum_y = 0;
++	target_x = target_y = 0.0;
++	sent_x = sent_y = 0;
++	if(session)
++		session->SetMouseAimState(0, 0, buttons);
 +}
 +
 +void MouseAim::SetBlocked(bool block)
@@ -319,8 +343,7 @@ index 0000000..f90e8cc
 +		return false;
 +	}
 +
-+	LARGE_INTEGER now;
-+	QueryPerformanceCounter(&now);
++	const qint64 now = CounterNow();
 +	RAWINPUT raw;
 +	UINT size = sizeof(raw);
 +	if(GetRawInputData(reinterpret_cast<HRAWINPUT>(msg->lParam), RID_INPUT, &raw, &size,
@@ -331,26 +354,25 @@ index 0000000..f90e8cc
 +	if(mouse.usFlags & MOUSE_MOVE_ABSOLUTE)
 +		return false;
 +	const USHORT flags = mouse.usButtonFlags;
++	const auto previous_buttons = buttons;
 +	if(flags & RI_MOUSE_LEFT_BUTTON_DOWN) buttons |= Qt::LeftButton;
 +	if(flags & RI_MOUSE_LEFT_BUTTON_UP) buttons &= ~Qt::LeftButton;
 +	if(flags & RI_MOUSE_RIGHT_BUTTON_DOWN) buttons |= Qt::RightButton;
 +	if(flags & RI_MOUSE_RIGHT_BUTTON_UP) buttons &= ~Qt::RightButton;
 +	if(flags & RI_MOUSE_MIDDLE_BUTTON_DOWN) buttons |= Qt::MiddleButton;
 +	if(flags & RI_MOUSE_MIDDLE_BUTTON_UP) buttons &= ~Qt::MiddleButton;
-+	Update(now.QuadPart, mouse.lLastX, mouse.lLastY);
++	if(mouse.lLastX || mouse.lLastY)
++		Update(now, mouse.lLastX, mouse.lLastY);
++	if(!pace_timer.isActive())
++		Flush(now, buttons != previous_buttons);
++	else if(buttons != previous_buttons)
++		session->SetMouseAimState(sent_x, sent_y, buttons);
 +	return false; // Let Qt and DefWindowProc finish processing foreground WM_INPUT.
-+}
-+
-+void MouseAim::ResetMotion()
-+{
-+	head = count = 0;
-+	sum_x = sum_y = 0;
-+	if(session)
-+		session->SetMouseAimState(0, 0, buttons);
 +}
 +
 +void MouseAim::Update(qint64 now, long dx, long dy)
 +{
++	last_motion = now;
 +	while(count && now - ring[head].t >= window_ticks)
 +	{
 +		sum_x -= ring[head].dx;
@@ -358,30 +380,58 @@ index 0000000..f90e8cc
 +		head = (head + 1) % ring.size();
 +		--count;
 +	}
-+	if(dx || dy)
++	if(count == ring.size())
 +	{
-+		if(count == ring.size())
-+		{
-+			std::rotate(ring.begin(), ring.begin() + head, ring.end());
-+			ring.resize(count * 2);
-+			head = 0;
-+		}
-+		ring[(head + count++) % ring.size()] = {now, dx, dy};
-+		sum_x += dx;
-+		sum_y += dy;
++		std::rotate(ring.begin(), ring.begin() + head, ring.end());
++		ring.resize(count * 2);
++		head = 0;
 +	}
++	ring[(head + count++) % ring.size()] = {now, dx, dy};
++	sum_x += dx;
++	sum_y += dy;
 +
-+	const double length = std::hypot(double(sum_x), double(sum_y));
++	const double y = sum_y * config.y_ratio;
++	const double length = std::hypot(double(sum_x), y);
 +	const double gain = config.sensitivity / (4.0 * config.window_ms);
 +	const double m = std::min(1.0, length * std::abs(gain));
++	// Gate on velocity before the curve and anti-deadzone lift quiet input.
++	engaged = m >= (engaged ? 0.01 : 0.03);
 +	double scale = 0.0;
-+	if(m > 0.0)
-+		scale = std::copysign(32767.0, gain) * (config.deadzone + (1.0 - config.deadzone)
++	if(engaged)
++		scale = std::copysign(1.0, gain) * (config.deadzone + (1.0 - config.deadzone)
 +				* std::pow(m, config.curve)) / length;
 +	// SDL right Y is negative for up, the same sign as relative mouse Y.
-+	session->SetMouseAimState(std::lround(sum_x * scale), std::lround(sum_y * scale), buttons);
-+	if(count)
-+		stop_timer.start();
++	target_x = sum_x * scale;
++	target_y = y * scale;
++}
++
++void MouseAim::Flush(qint64 now, bool button_edge)
++{
++	if(!captured || !session)
++		return;
++	double fade = 1.0;
++	const qint64 tail = now - last_motion - window_ticks;
++	if(engaged && tail >= 0)
++	{
++		fade = tau_ticks > 0.0 ? std::exp(-tail / tau_ticks) : 0.0;
++		if(std::hypot(target_x, target_y) * fade < 0.01)
++		{
++			engaged = false;
++			target_x = target_y = 0.0;
++		}
++	}
++	const qint16 x = std::lround(32767.0 * target_x * fade);
++	const qint16 y = std::lround(32767.0 * target_y * fade);
++	const bool changed = x != sent_x || y != sent_y;
++	if(changed || button_edge)
++	{
++		sent_x = x;
++		sent_y = y;
++		session->SetMouseAimState(x, y, buttons);
++	}
++	// One last interval after publishing zero keeps a quick restart within 500 Hz.
++	if(engaged || changed)
++		pace_timer.start();
 +}
 +#endif
 diff --git a/gui/src/qmlmainwindow.cpp b/gui/src/qmlmainwindow.cpp
@@ -453,10 +503,10 @@ index 93e0afa..613a43f 100644
      startup_video_visible_refresh_pending.storeRelease(1);
      armQuickNeedSync("completeStartupVideoVisibility");
 diff --git a/gui/src/settings.cpp b/gui/src/settings.cpp
-index 8b5b949..f3d6947 100644
+index 8b5b949..8cca22d 100644
 --- a/gui/src/settings.cpp
 +++ b/gui/src/settings.cpp
-@@ -996,6 +996,62 @@ void Settings::SetMouseTouchEnabled(bool enabled)
+@@ -996,6 +996,80 @@ void Settings::SetMouseTouchEnabled(bool enabled)
  	settings.setValue("settings/mouse_touch_enabled", enabled);
  }
  
@@ -482,7 +532,7 @@ index 8b5b949..f3d6947 100644
 +
 +double Settings::GetMouseAimDeadzone() const
 +{
-+	return qBound(0.0, settings.value("settings/mouse_aim_deadzone", 0.10).toDouble(), 0.5);
++	return qBound(0.0, settings.value("settings/mouse_aim_deadzone", 0.12).toDouble(), 0.5);
 +}
 +void Settings::SetMouseAimDeadzone(double deadzone)
 +{
@@ -491,7 +541,7 @@ index 8b5b949..f3d6947 100644
 +
 +double Settings::GetMouseAimCurve() const
 +{
-+	return qBound(0.3, settings.value("settings/mouse_aim_curve", 1.0).toDouble(), 3.0);
++	return qBound(0.3, settings.value("settings/mouse_aim_curve", 0.5).toDouble(), 3.0);
 +}
 +void Settings::SetMouseAimCurve(double curve)
 +{
@@ -507,6 +557,24 @@ index 8b5b949..f3d6947 100644
 +	settings.setValue("settings/mouse_aim_window_ms", qBound(2, ms, 32));
 +}
 +
++int Settings::GetMouseAimStopTauMs() const
++{
++	return qBound(0, settings.value("settings/mouse_aim_stop_tau_ms", 12).toInt(), 50);
++}
++void Settings::SetMouseAimStopTauMs(int ms)
++{
++	settings.setValue("settings/mouse_aim_stop_tau_ms", qBound(0, ms, 50));
++}
++
++double Settings::GetMouseAimYRatio() const
++{
++	return qBound(0.25, settings.value("settings/mouse_aim_y_ratio", 1.0).toDouble(), 4.0);
++}
++void Settings::SetMouseAimYRatio(double ratio)
++{
++	settings.setValue("settings/mouse_aim_y_ratio", qBound(0.25, ratio, 4.0));
++}
++
 +int Settings::GetMouseAimReleaseKey() const
 +{
 +	return settings.value("settings/mouse_aim_release_key", int(Qt::Key_F8)).toInt();
@@ -520,22 +588,23 @@ index 8b5b949..f3d6947 100644
  bool Settings::GetDpadTouchEnabled() const
  {
 diff --git a/gui/src/streamsession.cpp b/gui/src/streamsession.cpp
-index 44d7a0e..f2558ee 100755
+index 44d7a0e..ba01cf9 100755
 --- a/gui/src/streamsession.cpp
 +++ b/gui/src/streamsession.cpp
-@@ -303,6 +303,11 @@ StreamSessionConnectInfo::StreamSessionConnectInfo(
+@@ -303,6 +303,12 @@ StreamSessionConnectInfo::StreamSessionConnectInfo(
  	const bool keyboard_controller_enabled_setting = settings->GetKeyboardEnabled();
  	this->keyboard_controller_enabled = keyboard_controller_enabled_setting;
  	this->mouse_touch_enabled = settings->GetMouseTouchEnabled();
 +#ifdef _WIN32
 +	mouse_aim = {settings->GetMouseAimEnabled(), settings->GetMouseAimSensitivity(),
 +		settings->GetMouseAimDeadzone(), settings->GetMouseAimCurve(),
-+		settings->GetMouseAimWindowMs(), settings->GetMouseAimReleaseKey()};
++		settings->GetMouseAimWindowMs(), settings->GetMouseAimStopTauMs(),
++		settings->GetMouseAimYRatio(), settings->GetMouseAimReleaseKey()};
 +#endif
  	this->enable_keyboard = false;
  	this->enable_dualsense = true;
  	this->enable_idr_on_fec_failure = settings->GetIDROnFECFailureEnabled();
-@@ -385,6 +390,9 @@ StreamSession::StreamSession(const StreamSessionConnectInfo &connect_info, QObje
+@@ -385,6 +391,9 @@ StreamSession::StreamSession(const StreamSessionConnectInfo &connect_info, QObje
  	ps5_trigger_intensity(0x00),
  	rumble_haptics_connected(false),
  	rumble_haptics_on(false)
@@ -545,7 +614,7 @@ index 44d7a0e..f2558ee 100755
  {
  	mic_buf.buf = nullptr;
  	connected = false;
-@@ -513,6 +521,9 @@ StreamSession::StreamSession(const StreamSessionConnectInfo &connect_info, QObje
+@@ -513,6 +522,9 @@ StreamSession::StreamSession(const StreamSessionConnectInfo &connect_info, QObje
  	}
  
  	chiaki_controller_state_set_idle(&keyboard_state);
@@ -555,7 +624,7 @@ index 44d7a0e..f2558ee 100755
  	chiaki_controller_state_set_idle(&touch_state);
  	touch_tracker=QMap<int, uint8_t>();
  	mouse_touch_id=-1;
-@@ -898,6 +909,24 @@ void StreamSession::GoHome()
+@@ -898,6 +910,24 @@ void StreamSession::GoHome()
  	chiaki_session_go_home(&session);
  }
  
@@ -580,7 +649,7 @@ index 44d7a0e..f2558ee 100755
  void StreamSession::HandleMousePressEvent(QMouseEvent *event)
  {
  	if(!mouse_touch_enabled)
-@@ -1284,6 +1313,10 @@ void StreamSession::DpadSendFeedbackState()
+@@ -1284,6 +1314,10 @@ void StreamSession::DpadSendFeedbackState()
  	chiaki_controller_state_or(&state, &state, &sdeck_state);
  #endif
  	chiaki_controller_state_or(&state, &state, &keyboard_state);
@@ -591,7 +660,7 @@ index 44d7a0e..f2558ee 100755
  	chiaki_controller_state_or(&state, &state, &touch_state);
  
  	if(input_block)
-@@ -1340,6 +1373,10 @@ void StreamSession::SendFeedbackState()
+@@ -1340,6 +1374,10 @@ void StreamSession::SendFeedbackState()
  	chiaki_controller_state_or(&state, &state, &sdeck_state);
  #endif
  	chiaki_controller_state_or(&state, &state, &keyboard_state);

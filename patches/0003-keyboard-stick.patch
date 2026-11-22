@@ -1,0 +1,212 @@
+diff --git a/gui/include/settings.h b/gui/include/settings.h
+index fefe1f0..8848920 100644
+--- a/gui/include/settings.h
++++ b/gui/include/settings.h
+@@ -439,6 +439,10 @@ class Settings : public QObject
+ 
+ 		bool GetKeyboardEnabled() const;
+ 		void SetKeyboardEnabled(bool enabled);
++		int GetKeyboardWalkKey() const;
++		void SetKeyboardWalkKey(int key);
++		double GetKeyboardWalkScale() const;
++		void SetKeyboardWalkScale(double scale);
+ 
+ 		bool GetMouseTouchEnabled() const;
+ 		void SetMouseTouchEnabled(bool enabled);
+diff --git a/gui/include/streamsession.h b/gui/include/streamsession.h
+index 8802ff2..a8a67f9 100755
+--- a/gui/include/streamsession.h
++++ b/gui/include/streamsession.h
+@@ -97,6 +97,8 @@ class SdeckHapticsWorker;
+ 		bool stretch;
+ 		bool enable_keyboard;
+ 		bool keyboard_controller_enabled;
++		int keyboard_walk_key = Qt::Key_Alt;
++		double keyboard_walk_scale = 0.45;
+ 		bool mouse_touch_enabled;
+ #ifdef _WIN32
+ 		MouseAimConfig mouse_aim;
+@@ -226,6 +228,24 @@ class StreamSession : public QObject
+ 		bool rumble_haptics_on;
+ 		float PS_TOUCHPAD_MAX_X, PS_TOUCHPAD_MAX_Y;
+ 		ChiakiControllerState keyboard_state;
++		struct KeyboardStick
++		{
++			struct Axis
++			{
++				bool positive = false, negative = false;
++				int value = 0;
++
++				void Set(int sign, bool pressed)
++				{
++					(sign > 0 ? positive : negative) = pressed;
++					value = pressed ? sign : int(positive) - int(negative);
++				}
++			};
++			Axis x, y;
++			bool walking = false;
++		} keyboard_stick;
++		int keyboard_walk_key;
++		double keyboard_walk_scale;
+ #ifdef _WIN32
+ 		ChiakiControllerState mouse_state;
+ #endif
+@@ -375,6 +395,7 @@ class StreamSession : public QObject
+ 		ChiakiPiDecoder *GetPiDecoder()	{ return pi_decoder; }
+ #endif
+ 		void HandleKeyboardEvent(QKeyEvent *event);
++		void ReleaseKeyboardStick();
+ 		void HandleTouchEvent(QTouchEvent *event, qreal width, qreal height);
+ 		void HandleDpadTouchEvent(ChiakiControllerState *state, bool placeholder = false);
+ 		void HandleMouseReleaseEvent(QMouseEvent *event);
+diff --git a/gui/src/qmlmainwindow.cpp b/gui/src/qmlmainwindow.cpp
+index 613a43f..320160b 100644
+--- a/gui/src/qmlmainwindow.cpp
++++ b/gui/src/qmlmainwindow.cpp
+@@ -7720,6 +7720,11 @@ bool QmlMainWindow::nvidiaCard() const
+ bool QmlMainWindow::event(QEvent *event)
+ {
+     switch (event->type()) {
++    case QEvent::FocusOut:
++    case QEvent::WindowDeactivate:
++        if (session)
++            session->ReleaseKeyboardStick();
++        break;
+     case QEvent::MouseMove:
+     case QEvent::MouseButtonPress:
+     case QEvent::MouseButtonRelease:
+diff --git a/gui/src/settings.cpp b/gui/src/settings.cpp
+index 8cca22d..1b572ba 100644
+--- a/gui/src/settings.cpp
++++ b/gui/src/settings.cpp
+@@ -987,6 +987,24 @@ void Settings::SetKeyboardEnabled(bool enabled)
+ 	settings.setValue("settings/keyboard_enabled", enabled);
+ }
+ 
++int Settings::GetKeyboardWalkKey() const
++{
++	return settings.value("settings/keyboard_walk_key", int(Qt::Key_Alt)).toInt();
++}
++void Settings::SetKeyboardWalkKey(int key)
++{
++	settings.setValue("settings/keyboard_walk_key", key);
++}
++
++double Settings::GetKeyboardWalkScale() const
++{
++	return qBound(0.0, settings.value("settings/keyboard_walk_scale", 0.45).toDouble(), 1.0);
++}
++void Settings::SetKeyboardWalkScale(double scale)
++{
++	settings.setValue("settings/keyboard_walk_scale", qBound(0.0, scale, 1.0));
++}
++
+ bool Settings::GetMouseTouchEnabled() const
+ {
+ 	return settings.value("settings/mouse_touch_enabled", true).toBool();
+diff --git a/gui/src/streamsession.cpp b/gui/src/streamsession.cpp
+index ba01cf9..996a1df 100755
+--- a/gui/src/streamsession.cpp
++++ b/gui/src/streamsession.cpp
+@@ -302,6 +302,8 @@ StreamSessionConnectInfo::StreamSessionConnectInfo(
+ 	this->stretch = stretch;
+ 	const bool keyboard_controller_enabled_setting = settings->GetKeyboardEnabled();
+ 	this->keyboard_controller_enabled = keyboard_controller_enabled_setting;
++	keyboard_walk_key = settings->GetKeyboardWalkKey();
++	keyboard_walk_scale = settings->GetKeyboardWalkScale();
+ 	this->mouse_touch_enabled = settings->GetMouseTouchEnabled();
+ #ifdef _WIN32
+ 	mouse_aim = {settings->GetMouseAimEnabled(), settings->GetMouseAimSensitivity(),
+@@ -472,6 +474,8 @@ StreamSession::StreamSession(const StreamSessionConnectInfo &connect_info, QObje
+ 	audio_buffer_size = connect_info.audio_buffer_size;
+ 	mouse_touch_enabled = connect_info.mouse_touch_enabled;
+ 	keyboard_controller_enabled = connect_info.keyboard_controller_enabled;
++	keyboard_walk_key = connect_info.keyboard_walk_key;
++	keyboard_walk_scale = connect_info.keyboard_walk_scale;
+ 	host = connect_info.host;
+ 	QByteArray host_str = connect_info.host.toUtf8();
+ 
+@@ -975,18 +979,27 @@ void StreamSession::HandleMouseMoveEvent(QMouseEvent *event, qreal width, qreal
+ 	SendFeedbackState();
+ }
+ 
+-void StreamSession::HandleKeyboardEvent(QKeyEvent *event)
++void StreamSession::ReleaseKeyboardStick()
+ {
+-	if(!keyboard_controller_enabled)
+-		return;
+-	if(key_map.contains(Qt::Key(event->key())) == false)
++	keyboard_stick = {};
++	if(!keyboard_state.left_x && !keyboard_state.left_y)
+ 		return;
++	keyboard_state.left_x = keyboard_state.left_y = 0;
++	SendFeedbackState();
++}
+ 
+-	if(event->isAutoRepeat())
++void StreamSession::HandleKeyboardEvent(QKeyEvent *event)
++{
++	if(!keyboard_controller_enabled || event->isAutoRepeat())
++		return;
++	const auto key = Qt::Key(event->key());
++	const int button = key_map.value(key, 0);
++	if(!button && key != keyboard_walk_key)
+ 		return;
+ 
+-	int button = key_map[Qt::Key(event->key())];
+-	bool press_event = event->type() == QEvent::Type::KeyPress;
++	const bool press_event = event->type() == QEvent::Type::KeyPress;
++	if(key == keyboard_walk_key)
++		keyboard_stick.walking = press_event;
+ 
+ 	switch(button)
+ 	{
+@@ -1009,16 +1022,16 @@ void StreamSession::HandleKeyboardEvent(QKeyEvent *event)
+ 			keyboard_state.right_x = press_event ? -0x7fff : 0;
+ 			break;
+ 		case static_cast<int>(ControllerButtonExt::ANALOG_STICK_LEFT_Y_UP):
+-			keyboard_state.left_y = press_event ? -0x7fff : 0;
++			keyboard_stick.y.Set(-1, press_event);
+ 			break;
+ 		case static_cast<int>(ControllerButtonExt::ANALOG_STICK_LEFT_Y_DOWN):
+-			keyboard_state.left_y = press_event ? 0x7fff : 0;
++			keyboard_stick.y.Set(1, press_event);
+ 			break;
+ 		case static_cast<int>(ControllerButtonExt::ANALOG_STICK_LEFT_X_UP):
+-			keyboard_state.left_x = press_event ? 0x7fff : 0;
++			keyboard_stick.x.Set(1, press_event);
+ 			break;
+ 		case static_cast<int>(ControllerButtonExt::ANALOG_STICK_LEFT_X_DOWN):
+-			keyboard_state.left_x = press_event ? -0x7fff : 0;
++			keyboard_stick.x.Set(-1, press_event);
+ 			break;
+ 		default:
+ 			if(press_event)
+@@ -1028,6 +1041,11 @@ void StreamSession::HandleKeyboardEvent(QKeyEvent *event)
+ 			break;
+ 	}
+ 
++	const int x = keyboard_stick.x.value, y = keyboard_stick.y.value;
++	const double radius = 32767.0 * (keyboard_stick.walking ? keyboard_walk_scale : 1.0);
++	const int axis = qRound(x && y ? radius / qSqrt(2.0) : radius);
++	keyboard_state.left_x = x * axis;
++	keyboard_state.left_y = y * axis;
+ 	SendFeedbackState();
+ }
+ 
+@@ -1329,6 +1347,7 @@ void StreamSession::DpadSendFeedbackState()
+ 		{
+ 			chiaki_controller_state_set_idle(&state);
+ 			chiaki_controller_state_set_idle(&keyboard_state);
++			keyboard_stick = {};
+ 		}
+ 	}
+ 	if((dpad_touch_shortcut1 || dpad_touch_shortcut2 || dpad_touch_shortcut3 || dpad_touch_shortcut4) && (!dpad_touch_shortcut1 || (state.buttons & dpad_touch_shortcut1)) && (!dpad_touch_shortcut2 || (state.buttons & dpad_touch_shortcut2)) && (!dpad_touch_shortcut3 || (state.buttons & dpad_touch_shortcut3)) && (!dpad_touch_shortcut4 || (state.buttons & dpad_touch_shortcut4)))
+@@ -1389,6 +1408,7 @@ void StreamSession::SendFeedbackState()
+ 		{
+ 			chiaki_controller_state_set_idle(&state);
+ 			chiaki_controller_state_set_idle(&keyboard_state);
++			keyboard_stick = {};
+ 		}
+ 	}
+ 	if((dpad_touch_shortcut1 || dpad_touch_shortcut2 || dpad_touch_shortcut3 || dpad_touch_shortcut4) && (!dpad_touch_shortcut1 || (state.buttons & dpad_touch_shortcut1)) && (!dpad_touch_shortcut2 || (state.buttons & dpad_touch_shortcut2)) && (!dpad_touch_shortcut3 || (state.buttons & dpad_touch_shortcut3)) && (!dpad_touch_shortcut4 || (state.buttons & dpad_touch_shortcut4)))
