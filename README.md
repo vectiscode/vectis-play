@@ -6,7 +6,11 @@ The runtime is the official chiaki-ng v1.10.1 Windows portable archive ([release
 
 ## Layout
 
-- `VectisPlay.cs`: controller. Loads the embedded XAML, binds named parts by type, reads and writes settings, owns the child process.
+- `src/Program.cs`: entry point. Single-instance mutex, embedded XAML load, window host.
+- `src/Controller.cs`: window parts, session state machine, child process lifecycle, draft Apply/Revert and the link check wiring.
+- `src/StreamSettings.cs`: choice lists, field ids, registry read/write, validation and conversions. No UI types.
+- `src/LinkProbe.cs`: default-route detection, WLAN query, gateway sampling, stats and the bitrate estimate. No WPF types.
+- `src/LinkPanel.cs`: Session link card drawing and readout.
 - `Workbench.xaml`: window layout, embedded as `Vectis.Workbench.xaml`. Four tabs: Session, Stream, Picture, Sound.
 - `VectisPlay.manifest`, `assets/VectisPlay.ico`: manifest and icon. The mark follows the vectiscode site favicon under MIT, see `LICENSES/Vectis-brand-MIT.txt`.
 - `build.py`: verifies and stages the runtime, patches the exe literal, compiles the launcher.
@@ -55,6 +59,12 @@ Each control edits one native setting. Changing one never changes another except
 
 Apply validates every changed field before writing anything and writes only the fields you changed. A native value the workbench cannot represent is shown as `Native: <value>` and left alone until you pick something else. OpenGL cannot display H.265 HDR, so that pair is refused with a message instead of being rewritten. The first named scaler also initializes the missing upstream placebo defaults in the private group, because chiaki-ng would otherwise reset the scaler on its next start. Frame mixers are native temporal blending of decoded frames. They are not frame generation and they cannot make input arrive earlier.
 
+## Link check
+
+The Session tab has a Link card. "Check link" measures this PC's hop to the router for about 10 seconds: it finds the interface carrying the default route, reads band, signal and receive rate from Windows (the Native Wifi API on Wi-Fi, never netsh), then pings the first IPv4 gateway 500 times and draws every reply on a timeline with median, p95, spikes and loss. It never contacts the console.
+
+On Wi-Fi the card also suggests a bitrate: 25 percent of the receive rate rounded down to 500 kbps and clamped to 3000 to 50000 kbps, halved when loss is over 2 percent or p95 minus median is over 20 ms. The "Use" button only fills the Bitrate draft so the changed marker and Apply count show; Apply still decides what is saved. The number is an estimate, not a measurement of what the console or the rest of the path can carry. Ethernet gets no suggestion.
+
 ## Image quality and latency
 
 chiaki-ng decodes video with FFmpeg and renders it natively. On Windows the automatic path can use Vulkan Video, CUDA or D3D11VA depending on the driver and renderer. Software decode is a fallback. The active path has not been measured on this PC.
@@ -73,7 +83,7 @@ All launcher data lives in `HKCU\Software\Vectis`. The stock Chiaki keys and any
 
 ## Status
 
-The launcher builds with `python build.py` against .NET Framework 4 WPF. The new `runtime/` was staged and its patched `chiaki.exe` hash matched, but that runtime has not been launched. The earlier offline `list` check ran on the previous runtime only. The embedded workbench was loaded by an offscreen host with the registry redirected to a throwaway key: the Session, Stream, Picture and Sound pages rendered at 980x680, a bitrate of 11677 saved and reloaded exactly with resolution unchanged, an invalid volume was refused without touching the saved bitrate and an FSR scaler with a Linear mixer wrote the expected native values. The compiled entry point also opened and closed from a copy without a player runtime. No console was paired. No stream was run and no setting was saved to the real Vectis registry keys. Pairing, reconnect, video pacing, audio, DualSense input and input-to-display latency still need a user-selected live slot. The launcher uses same-LAN discovery rather than asking for an IP.
+The launcher builds with `python build.py` against .NET Framework 4 WPF, compiling the sources under `src/`. The `runtime/` hash check passed and the patched `chiaki.exe` staged, but that runtime has not been launched. The embedded workbench was loaded by an offscreen host with the registry redirected to a throwaway key: all four tabs rendered at 980x680 and the link check ran one real 500-sample gateway measurement on this PC's Wi-Fi (Wi-Fi 6 on 5 GHz, 82 percent signal, 2402 Mbps receive, 3 ms median, 0 percent loss) ending in a 50000 kbps draft suggestion that touched only the Bitrate field. Apply, Revert, slider and typed-value behavior was probed without writes. The compiled entry point also opened and closed from a copy without a player runtime. No console was paired, no stream was run and no setting was saved to the real Vectis registry keys. Pairing, reconnect, video pacing, audio, DualSense input and input-to-display latency still need a user-selected live slot. The launcher uses same-LAN discovery rather than asking for an IP.
 
 ## License
 

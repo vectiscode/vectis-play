@@ -116,6 +116,30 @@
       </Setter>
     </Style>
 
+    <!-- Accent outline: signal border and text on transparent, for secondary accent actions -->
+    <Style x:Key="SignalOutline" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+      <Setter Property="Foreground" Value="{StaticResource Signal}"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="Face" MinWidth="104" Height="38" CornerRadius="2" Background="Transparent" BorderBrush="{StaticResource Signal}" BorderThickness="1" Padding="18,0">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True" TextElement.Foreground="{TemplateBinding Foreground}"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Face" Property="Background" Value="#2A1210"/></Trigger>
+              <Trigger Property="IsPressed" Value="True"><Setter TargetName="Face" Property="Background" Value="#1A0C0A"/></Trigger>
+              <Trigger Property="IsKeyboardFocused" Value="True">
+                <Setter TargetName="Face" Property="BorderBrush" Value="{StaticResource FocusRing}"/>
+                <Setter TargetName="Face" Property="BorderThickness" Value="2"/>
+                <Setter TargetName="Face" Property="Padding" Value="17,0"/>
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.4"/><Setter Property="Cursor" Value="Arrow"/></Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
     <!-- TextBox -->
     <Style TargetType="TextBox">
       <Setter Property="Foreground" Value="{StaticResource Paper}"/>
@@ -408,48 +432,59 @@
 
       <!-- 01 SESSION -->
       <TabItem Header="Session" Tag="01">
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
         <Grid Margin="40,30,40,16">
           <Grid.RowDefinitions>
-            <RowDefinition Height="170"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
           </Grid.RowDefinitions>
-          <Border Grid.Row="0" Background="#141211" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="3" Margin="0,0,0,22" ClipToBounds="True">
-            <Viewbox Stretch="Uniform" Margin="14,10">
-              <Canvas Width="880" Height="262">
-                <!-- hairline field -->
-                <Path Stroke="#221E1B" StrokeThickness="1" Data="M0 40H880M0 85H880M0 130H880M0 175H880M0 220H880"/>
-                <!-- console shell -->
-                <Path Stroke="#F2ECE6" StrokeThickness="3" StrokeLineJoin="Round" Data="M64 238V44Q64 24 84 24H112Q168 86 168 130Q168 174 112 236H84Q64 236 64 238Z"/>
-                <Path Stroke="#FF5B4B" StrokeThickness="2" Data="M96 24Q146 84 146 130Q146 176 96 236"/>
-                <Ellipse Canvas.Left="102" Canvas.Top="126" Width="8" Height="8" Fill="#FF5B4B"/>
-                <!-- outer spread, not the main path -->
-                <Path Stroke="#2E2824" StrokeThickness="1.5" StrokeDashArray="1 7" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Data="M168 130C290 130 340 40 470 40S610 130 660 130"/>
-                <Path Stroke="#2E2824" StrokeThickness="1.5" StrokeDashArray="1 7" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Data="M168 130C290 130 340 220 470 220S610 130 660 130"/>
-                <Path Stroke="#5A4F48" StrokeThickness="1.5" StrokeDashArray="2 8" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Data="M168 130C300 130 360 74 470 74S600 130 660 130"/>
-                <Path Stroke="#5A4F48" StrokeThickness="1.5" StrokeDashArray="2 8" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Data="M168 130C300 130 360 186 470 186S600 130 660 130"/>
-                <!-- main direct line -->
-                <Path Stroke="#FF5B4B" StrokeThickness="3" Data="M168 130H660"/>
-                <Path Stroke="#FF5B4B" StrokeThickness="2" Opacity="0.55" Data="M212 120V140M252 124V136M292 120V140M332 124V136M372 120V140M412 124V136M452 120V140M492 124V136M532 120V140M572 124V136M612 120V140"/>
-                <Ellipse Canvas.Left="161" Canvas.Top="123" Width="14" Height="14" Fill="#0F0E0D" Stroke="#FF5B4B" StrokeThickness="2.5"/>
-                <Ellipse Canvas.Left="653" Canvas.Top="123" Width="14" Height="14" Fill="#FF5B4B"/>
-                <!-- screen -->
-                <Path Stroke="#F2ECE6" StrokeThickness="3" StrokeLineJoin="Round" Data="M670 60H826Q836 60 836 70V190Q836 200 826 200H670Q660 200 660 190V70Q660 60 670 60Z"/>
-                <Path Stroke="#3E3731" StrokeThickness="1.5" Data="M674 74H822V186H674Z"/>
-                <Path Stroke="#F2ECE6" StrokeThickness="3" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Data="M748 200V226M712 228H784"/>
-                <Canvas>
-                  <Canvas.RenderTransform><MatrixTransform Matrix="0.11,0,0,0.11,693.2,67.1"/></Canvas.RenderTransform>
-                  <Path Fill="#F2ECE6" Data="M143 210H335C398 210 438 248 458 322C492 450 532 680 566 830L518 935Z"/>
-                  <Path Fill="#D1281F" Data="M680 210H853L566 830C546 750 544 610 562 470C580 330 606 210 680 210Z"/>
-                  <Path Fill="#99251E" Data="M853 210C730 340 600 500 558 720L566 830Z"/>
-                </Canvas>
-                <!-- crop marks -->
-                <Path Stroke="#5A4F48" StrokeThickness="1.5" Data="M640 44V32H652M844 32H856V44M856 216V228H844M652 228H640V216"/>
-                <TextBlock Canvas.Left="64" Canvas.Top="242" Text="CONSOLE" FontFamily="Consolas" FontSize="15" Foreground="#A89F98"/>
-                <TextBlock Canvas.Left="384" Canvas.Top="144" Text="NETWORK" FontFamily="Consolas" FontSize="15" Foreground="#A89F98"/>
-                <TextBlock Canvas.Left="696" Canvas.Top="236" Text="DISPLAY" FontFamily="Consolas" FontSize="15" Foreground="#A89F98"/>
-              </Canvas>
-            </Viewbox>
-          </Border>
+          <StackPanel Grid.Row="0" Margin="0,0,0,22">
+            <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="4" Padding="20,16">
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" MinWidth="200"/>
+                  <ColumnDefinition Width="240"/>
+                </Grid.ColumnDefinitions>
+                <Border Grid.Column="0" Background="{StaticResource Field}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="3" Height="156" ClipToBounds="True">
+                  <Canvas x:Name="LinkTrace"/>
+                </Border>
+                <StackPanel Grid.Column="1" Margin="18,0,0,0">
+                  <UniformGrid Columns="2" Rows="3">
+                    <StackPanel Margin="0,0,12,10">
+                      <TextBlock Text="LINK" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Muted}"/>
+                      <TextBlock x:Name="LinkKind" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource Paper}" Margin="0,3,0,0" TextWrapping="Wrap" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                    </StackPanel>
+                    <StackPanel Margin="0,0,0,10">
+                      <TextBlock Text="SIGNAL" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Muted}"/>
+                      <TextBlock x:Name="LinkSignal" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource Paper}" Margin="0,3,0,0" TextWrapping="Wrap" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                    </StackPanel>
+                    <StackPanel Margin="0,0,12,10">
+                      <TextBlock Text="RECEIVE" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Muted}"/>
+                      <TextBlock x:Name="LinkReceive" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource Paper}" Margin="0,3,0,0" TextWrapping="Wrap" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                    </StackPanel>
+                    <StackPanel Margin="0,0,0,10">
+                      <TextBlock Text="MEDIAN" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Muted}"/>
+                      <TextBlock x:Name="LinkMedian" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource Paper}" Margin="0,3,0,0" TextWrapping="Wrap" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                    </StackPanel>
+                    <StackPanel Margin="0,0,12,10">
+                      <TextBlock Text="P95" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Muted}"/>
+                      <TextBlock x:Name="LinkP95" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource Paper}" Margin="0,3,0,0" TextWrapping="Wrap" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                    </StackPanel>
+                    <StackPanel Margin="0,0,0,10">
+                      <TextBlock Text="SPIKES · LOSS" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Muted}"/>
+                      <TextBlock x:Name="LinkSpikes" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource Paper}" Margin="0,3,0,0" TextWrapping="Wrap" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                    </StackPanel>
+                  </UniformGrid>
+                  <WrapPanel Margin="0,12,0,0">
+                    <Button x:Name="CheckLink" Content="Check link" MinWidth="112" Margin="0,0,10,0"/>
+                    <Button x:Name="UseLinkBitrate" Style="{StaticResource SignalOutline}" Content="Use 12000 kbps" Visibility="Collapsed" MinWidth="128"/>
+                  </WrapPanel>
+                  <TextBlock x:Name="LinkNotes" Style="{StaticResource FieldHint}" Margin="0,10,0,0"/>
+                </StackPanel>
+              </Grid>
+            </Border>
+            <TextBlock Style="{StaticResource FieldHint}" Margin="4,8,0,0" Text="Measures this PC's hop to your router for 10 seconds. The console is not contacted."/>
+          </StackPanel>
           <StackPanel Grid.Row="1">
             <TextBlock Style="{StaticResource Eyebrow}" Text="SESSION"/>
             <TextBlock x:Name="SessionTitle" Style="{StaticResource PageTitle}" Text="Pair your PS5" Margin="0,2,0,6" TextWrapping="Wrap"/>
@@ -503,6 +538,7 @@
             </StackPanel>
           </StackPanel>
         </Grid>
+        </ScrollViewer>
       </TabItem>
 
       <!-- 02 STREAM -->

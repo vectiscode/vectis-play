@@ -6,7 +6,7 @@ Steps: require the shipped license texts, ensure the pinned release zip
 staging dir inside this repo, rebrand the single organization/app data
 literal inside chiaki.exe and verify the patched hash, move the payload to
 runtime/, check namespace.patch against the upstream checkout when present,
-then compile VectisPlay.cs with the .NET Framework csc.
+then compile the sources in src/ with the .NET Framework csc.
 """
 
 import hashlib
@@ -116,6 +116,9 @@ def compile_launcher():
     xaml = ROOT / "Workbench.xaml"
     if not xaml.exists():
         fail("Workbench.xaml is missing; the launcher embeds it as Vectis.Workbench.xaml")
+    sources = sorted((ROOT / "src").glob("*.cs"))
+    if not sources:
+        fail("no C# sources found in src/")
     framework = CSC.parent
     wpf = framework / "WPF"
     subprocess.run([
@@ -128,9 +131,9 @@ def compile_launcher():
         "/r:" + str(framework / "System.Xaml.dll"),
         "/r:" + str(framework / "System.Xml.dll"),
         "/resource:" + str(xaml) + ",Vectis.Workbench.xaml",
-        "/out:" + str(ROOT / "VectisPlay.exe"), str(ROOT / "VectisPlay.cs"),
-    ], check=True)
-    print("VectisPlay.exe compiled")
+        "/out:" + str(ROOT / "VectisPlay.exe"),
+    ] + [str(path) for path in sources], check=True)
+    print("VectisPlay.exe compiled from " + str(len(sources)) + " sources")
 
 
 def main():
