@@ -1,0 +1,604 @@
+diff --git a/gui/CMakeLists.txt b/gui/CMakeLists.txt
+index 7e777e1..fec9d21 100755
+--- a/gui/CMakeLists.txt
++++ b/gui/CMakeLists.txt
+@@ -83,6 +83,8 @@ if(APPLE)
+ 	)
+ elseif(WIN32)
+ 	list(APPEND SOURCE_FILES
++		include/mouseaim.h
++		src/mouseaim.cpp
+ 		include/windowsWakeSleep.h
+ 		src/windowsWakeSleep.cpp
+ 	)
+diff --git a/gui/include/mouseaim.h b/gui/include/mouseaim.h
+new file mode 100644
+index 0000000..8350337
+--- /dev/null
++++ b/gui/include/mouseaim.h
+@@ -0,0 +1,51 @@
++// SPDX-License-Identifier: LicenseRef-AGPL-3.0-only-OpenSSL
++
++#pragma once
++
++#ifdef _WIN32
++#include <QAbstractNativeEventFilter>
++#include <QPointer>
++#include <QTimer>
++#include <vector>
++
++class QWindow;
++class StreamSession;
++
++struct MouseAimConfig
++{
++	bool enabled = false;
++	double sensitivity = 1.0;
++	double deadzone = 0.10;
++	double curve = 1.0;
++	int window_ms = 8;
++	int release_key = Qt::Key_F8;
++};
++
++class MouseAim : public QObject, public QAbstractNativeEventFilter
++{
++	public:
++		MouseAim(QWindow &window, StreamSession &session);
++		~MouseAim() override;
++		void SetBlocked(bool block);
++
++	private:
++		bool eventFilter(QObject *, QEvent *event) override;
++		bool nativeEventFilter(const QByteArray &type, void *message, qintptr *) override;
++		void Capture();
++		void Release();
++		void ResetMotion();
++		void Update(qint64 now, long dx, long dy);
++
++		QWindow &window;
++		QPointer<StreamSession> session;
++		const MouseAimConfig config;
++		bool captured = false, released = false, blocked = false;
++		Qt::MouseButtons buttons;
++		QTimer stop_timer;
++		qint64 window_ticks;
++		struct Sample { qint64 t; long dx, dy; };
++		std::vector<Sample> ring;
++		size_t head = 0, count = 0;
++		qint64 sum_x = 0, sum_y = 0;
++};
++#endif
+diff --git a/gui/include/qmlmainwindow.h b/gui/include/qmlmainwindow.h
+index 5a54616..47faada 100644
+--- a/gui/include/qmlmainwindow.h
++++ b/gui/include/qmlmainwindow.h
+@@ -10,6 +10,9 @@
+ #include <QLoggingCategory>
+ #include <deque>
+ #include <atomic>
++#ifdef _WIN32
++#include <memory>
++#endif
+ 
+ extern "C" {
+ #include <libavcodec/avcodec.h>
+@@ -314,6 +317,10 @@ private:
+     bool keep_video = false;
+     RenderBackend render_backend = RenderBackend::Vulkan;
+     int grab_input = 0;
++    void updateStreamCursor();
++#ifdef _WIN32
++    std::unique_ptr<MouseAim> mouse_aim;
++#endif
+     int dropped_frames = 0;
+     bool is_window_adjustable = false;
+     bool is_stream_window_adjustable = false;
+diff --git a/gui/include/settings.h b/gui/include/settings.h
+index be03e9e..fa611da 100644
+--- a/gui/include/settings.h
++++ b/gui/include/settings.h
+@@ -443,6 +443,21 @@ class Settings : public QObject
+ 		bool GetMouseTouchEnabled() const;
+ 		void SetMouseTouchEnabled(bool enabled);
+ 
++#ifdef _WIN32
++		bool GetMouseAimEnabled() const;
++		void SetMouseAimEnabled(bool enabled);
++		double GetMouseAimSensitivity() const;
++		void SetMouseAimSensitivity(double sensitivity);
++		double GetMouseAimDeadzone() const;
++		void SetMouseAimDeadzone(double deadzone);
++		double GetMouseAimCurve() const;
++		void SetMouseAimCurve(double curve);
++		int GetMouseAimWindowMs() const;
++		void SetMouseAimWindowMs(int ms);
++		int GetMouseAimReleaseKey() const;
++		void SetMouseAimReleaseKey(int key);
++#endif
++
+ 		bool GetDpadTouchEnabled() const;
+ 		void SetDpadTouchEnabled(bool enabled);
+ 
+diff --git a/gui/include/streamsession.h b/gui/include/streamsession.h
+index 52439ce..8802ff2 100755
+--- a/gui/include/streamsession.h
++++ b/gui/include/streamsession.h
+@@ -31,6 +31,9 @@
+ #include "sessionlog.h"
+ #include "controllermanager.h"
+ #include "settings.h"
++#ifdef _WIN32
++#include "mouseaim.h"
++#endif
+ 
+ #include <QObject>
+ #include <QImage>
+@@ -95,6 +98,9 @@ class SdeckHapticsWorker;
+ 		bool enable_keyboard;
+ 		bool keyboard_controller_enabled;
+ 		bool mouse_touch_enabled;
++#ifdef _WIN32
++		MouseAimConfig mouse_aim;
++#endif
+ 		bool enable_dualsense;
+ 		bool auto_regist;
+ 		float haptic_override;
+@@ -220,6 +226,9 @@ class StreamSession : public QObject
+ 		bool rumble_haptics_on;
+ 		float PS_TOUCHPAD_MAX_X, PS_TOUCHPAD_MAX_Y;
+ 		ChiakiControllerState keyboard_state;
++#ifdef _WIN32
++		ChiakiControllerState mouse_state;
++#endif
+ 		ChiakiControllerState touch_state;
+ 		QMap<int, uint8_t> touch_tracker;
+ 		int8_t mouse_touch_id;
+@@ -371,6 +380,10 @@ class StreamSession : public QObject
+ 		void HandleMouseReleaseEvent(QMouseEvent *event);
+ 		void HandleMousePressEvent(QMouseEvent *event);
+ 		void HandleMouseMoveEvent(QMouseEvent *event, qreal width, qreal height);
++#ifdef _WIN32
++		const MouseAimConfig mouse_aim_config;
++		void SetMouseAimState(int16_t x, int16_t y, Qt::MouseButtons buttons);
++#endif
+ #if CHIAKI_GUI_ENABLE_SPEEX
+ 		bool ProcessMicFrame(int16_t *echo_buf);
+ #endif
+diff --git a/gui/src/mouseaim.cpp b/gui/src/mouseaim.cpp
+new file mode 100644
+index 0000000..f90e8cc
+--- /dev/null
++++ b/gui/src/mouseaim.cpp
+@@ -0,0 +1,214 @@
++// SPDX-License-Identifier: LicenseRef-AGPL-3.0-only-OpenSSL
++
++#include "mouseaim.h"
++
++#ifdef _WIN32
++#include "streamsession.h"
++
++#include <QGuiApplication>
++#include <QKeyEvent>
++#include <QWindow>
++#include <qt_windows.h>
++#include <algorithm>
++#include <cmath>
++
++static bool ClipToClient(HWND hwnd)
++{
++	RECT rect;
++	POINT origin = {};
++	return GetClientRect(hwnd, &rect) && !IsRectEmpty(&rect)
++		&& ClientToScreen(hwnd, &origin) && OffsetRect(&rect, origin.x, origin.y)
++		&& ClipCursor(&rect);
++}
++
++MouseAim::MouseAim(QWindow &window, StreamSession &session)
++	: window(window), session(&session), config(session.mouse_aim_config), ring(64)
++{
++	LARGE_INTEGER frequency;
++	QueryPerformanceFrequency(&frequency);
++	window_ticks = (frequency.QuadPart * config.window_ms + 999) / 1000;
++	stop_timer.setSingleShot(true);
++	stop_timer.setTimerType(Qt::PreciseTimer);
++	stop_timer.setInterval(config.window_ms);
++	connect(&stop_timer, &QTimer::timeout, this, &MouseAim::ResetMotion);
++	window.installEventFilter(this);
++	qGuiApp->installNativeEventFilter(this);
++	window.setCursor(Qt::ArrowCursor);
++	Capture();
++}
++
++MouseAim::~MouseAim()
++{
++	qGuiApp->removeNativeEventFilter(this);
++	window.removeEventFilter(this);
++	Release();
++}
++
++void MouseAim::Capture()
++{
++	if(captured || blocked || !window.isActive())
++		return;
++	const HWND hwnd = reinterpret_cast<HWND>(window.winId());
++	if(GetForegroundWindow() != hwnd)
++		return;
++	const RAWINPUTDEVICE mouse = {0x01, 0x02, 0, hwnd};
++	if(!RegisterRawInputDevices(&mouse, 1, sizeof(mouse)))
++	{
++		qWarning("Mouse aim: RegisterRawInputDevices failed (%lu)", GetLastError());
++		return;
++	}
++	captured = true;
++	if(!ClipToClient(hwnd))
++	{
++		Release();
++		return;
++	}
++	released = false;
++	window.setCursor(Qt::BlankCursor);
++}
++
++void MouseAim::Release()
++{
++	released = true;
++	if(!captured)
++		return;
++	captured = false;
++	const RAWINPUTDEVICE mouse = {0x01, 0x02, RIDEV_REMOVE, nullptr};
++	if(!RegisterRawInputDevices(&mouse, 1, sizeof(mouse)))
++		qWarning("Mouse aim: raw input removal failed (%lu)", GetLastError());
++	ClipCursor(nullptr);
++	window.setCursor(Qt::ArrowCursor);
++	stop_timer.stop();
++	buttons = {};
++	ResetMotion();
++}
++
++void MouseAim::SetBlocked(bool block)
++{
++	blocked = block;
++	if(block)
++		Release();
++}
++
++bool MouseAim::eventFilter(QObject *, QEvent *event)
++{
++	switch(event->type())
++	{
++		case QEvent::FocusIn:
++		case QEvent::WindowActivate:
++			if(!released)
++				Capture();
++			break;
++		case QEvent::FocusOut:
++		case QEvent::WindowDeactivate:
++		case QEvent::Hide:
++			Release();
++			break;
++		case QEvent::Move:
++		case QEvent::Resize:
++			if(captured && !ClipToClient(reinterpret_cast<HWND>(window.winId())))
++				Release();
++			break;
++		case QEvent::ShortcutOverride:
++		case QEvent::KeyPress:
++		case QEvent::KeyRelease:
++			if(!blocked && static_cast<QKeyEvent *>(event)->key() == config.release_key)
++			{
++				if(event->type() == QEvent::KeyPress)
++					Release();
++				event->accept();
++				return true;
++			}
++			break;
++		case QEvent::MouseButtonPress:
++		case QEvent::MouseButtonDblClick:
++			if(!blocked && static_cast<QMouseEvent *>(event)->source() == Qt::MouseEventNotSynthesized)
++				Capture();
++			[[fallthrough]];
++		case QEvent::MouseMove:
++		case QEvent::MouseButtonRelease:
++			// The recapture click and legacy mouse events must not become touchpad input.
++			return !blocked;
++		default:
++			break;
++	}
++	return false;
++}
++
++bool MouseAim::nativeEventFilter(const QByteArray &type, void *message, qintptr *)
++{
++	const MSG *msg = static_cast<const MSG *>(message);
++	if(!captured || msg->message != WM_INPUT || type != "windows_generic_MSG"
++			|| msg->hwnd != reinterpret_cast<HWND>(window.winId()) || !session)
++		return false;
++	if(GetForegroundWindow() != msg->hwnd)
++	{
++		Release();
++		return false;
++	}
++
++	LARGE_INTEGER now;
++	QueryPerformanceCounter(&now);
++	RAWINPUT raw;
++	UINT size = sizeof(raw);
++	if(GetRawInputData(reinterpret_cast<HRAWINPUT>(msg->lParam), RID_INPUT, &raw, &size,
++				sizeof(RAWINPUTHEADER)) != sizeof(raw) || raw.header.dwType != RIM_TYPEMOUSE)
++		return false;
++	const RAWMOUSE &mouse = raw.data.mouse;
++	// MOUSE_MOVE_RELATIVE is zero. Other flags can accompany relative movement.
++	if(mouse.usFlags & MOUSE_MOVE_ABSOLUTE)
++		return false;
++	const USHORT flags = mouse.usButtonFlags;
++	if(flags & RI_MOUSE_LEFT_BUTTON_DOWN) buttons |= Qt::LeftButton;
++	if(flags & RI_MOUSE_LEFT_BUTTON_UP) buttons &= ~Qt::LeftButton;
++	if(flags & RI_MOUSE_RIGHT_BUTTON_DOWN) buttons |= Qt::RightButton;
++	if(flags & RI_MOUSE_RIGHT_BUTTON_UP) buttons &= ~Qt::RightButton;
++	if(flags & RI_MOUSE_MIDDLE_BUTTON_DOWN) buttons |= Qt::MiddleButton;
++	if(flags & RI_MOUSE_MIDDLE_BUTTON_UP) buttons &= ~Qt::MiddleButton;
++	Update(now.QuadPart, mouse.lLastX, mouse.lLastY);
++	return false; // Let Qt and DefWindowProc finish processing foreground WM_INPUT.
++}
++
++void MouseAim::ResetMotion()
++{
++	head = count = 0;
++	sum_x = sum_y = 0;
++	if(session)
++		session->SetMouseAimState(0, 0, buttons);
++}
++
++void MouseAim::Update(qint64 now, long dx, long dy)
++{
++	while(count && now - ring[head].t >= window_ticks)
++	{
++		sum_x -= ring[head].dx;
++		sum_y -= ring[head].dy;
++		head = (head + 1) % ring.size();
++		--count;
++	}
++	if(dx || dy)
++	{
++		if(count == ring.size())
++		{
++			std::rotate(ring.begin(), ring.begin() + head, ring.end());
++			ring.resize(count * 2);
++			head = 0;
++		}
++		ring[(head + count++) % ring.size()] = {now, dx, dy};
++		sum_x += dx;
++		sum_y += dy;
++	}
++
++	const double length = std::hypot(double(sum_x), double(sum_y));
++	const double gain = config.sensitivity / (4.0 * config.window_ms);
++	const double m = std::min(1.0, length * std::abs(gain));
++	double scale = 0.0;
++	if(m > 0.0)
++		scale = std::copysign(32767.0, gain) * (config.deadzone + (1.0 - config.deadzone)
++				* std::pow(m, config.curve)) / length;
++	// SDL right Y is negative for up, the same sign as relative mouse Y.
++	session->SetMouseAimState(std::lround(sum_x * scale), std::lround(sum_y * scale), buttons);
++	if(count)
++		stop_timer.start();
++}
++#endif
+diff --git a/gui/src/qmlmainwindow.cpp b/gui/src/qmlmainwindow.cpp
+index 93e0afa..613a43f 100644
+--- a/gui/src/qmlmainwindow.cpp
++++ b/gui/src/qmlmainwindow.cpp
+@@ -2754,10 +2754,21 @@ void QmlMainWindow::setKeepVideo(bool keep)
+     emit keepVideoChanged();
+ }
+ 
++void QmlMainWindow::updateStreamCursor()
++{
++#ifdef _WIN32
++    if (mouse_aim) {
++        mouse_aim->SetBlocked(grab_input != 0);
++        return;
++    }
++#endif
++    setCursor(!grab_input && has_video && settings->GetHideCursor() ? Qt::BlankCursor : Qt::ArrowCursor);
++}
++
+ void QmlMainWindow::grabInput()
+ {
+-    setCursor(Qt::ArrowCursor);
+     grab_input++;
++    updateStreamCursor();
+     if (session)
+         session->BlockInput(grab_input);
+ }
+@@ -2767,8 +2778,7 @@ void QmlMainWindow::releaseInput()
+     if (!grab_input)
+         return;
+     grab_input--;
+-    if (!grab_input && has_video && settings->GetHideCursor())
+-        setCursor(Qt::BlankCursor);
++    updateStreamCursor();
+     if (session)
+         session->BlockInput(grab_input);
+ }
+@@ -5161,6 +5171,9 @@ renderer_backend_ready:
+     connect(backend, &QmlBackend::sessionChanged, this, [this, exit_app_on_stream_exit](StreamSession *s) {
+         const bool preserve_startup_warmup = s && startup_warmup_preserve_next_session_change;
+         startup_warmup_preserve_next_session_change = false;
++#ifdef _WIN32
++        mouse_aim.reset();
++#endif
+         session = s;
+         stream_session_active.storeRelease(s ? 1 : 0);
+         startup_video_visible_generation.fetchAndAddRelaxed(1);
+@@ -5247,6 +5260,10 @@ renderer_backend_ready:
+             }
+             startup_video_visible_pending.storeRelease(0);
+         }
++#ifdef _WIN32
++        if (s && s->mouse_aim_config.enabled)
++            mouse_aim = std::make_unique<MouseAim>(*this, *s);
++#endif
+         if(session && exit_app_on_stream_exit)
+         {
+             connect(session, &StreamSession::SessionQuit, qGuiApp, &QGuiApplication::quit);
+@@ -5851,8 +5868,7 @@ void QmlMainWindow::completeStartupVideoVisibility(quint64 generation)
+ 
+     has_video = true;
+     startup_first_real_frame_queued_pending_visibility.storeRelease(0);
+-    if (!grab_input && settings->GetHideCursor())
+-        setCursor(Qt::BlankCursor);
++    updateStreamCursor();
+     emit hasVideoChanged();
+     startup_video_visible_refresh_pending.storeRelease(1);
+     armQuickNeedSync("completeStartupVideoVisibility");
+diff --git a/gui/src/settings.cpp b/gui/src/settings.cpp
+index 8b5b949..f3d6947 100644
+--- a/gui/src/settings.cpp
++++ b/gui/src/settings.cpp
+@@ -996,6 +996,62 @@ void Settings::SetMouseTouchEnabled(bool enabled)
+ 	settings.setValue("settings/mouse_touch_enabled", enabled);
+ }
+ 
++#ifdef _WIN32
++bool Settings::GetMouseAimEnabled() const
++{
++	return settings.value("settings/mouse_aim_enabled", false).toBool();
++}
++void Settings::SetMouseAimEnabled(bool enabled)
++{
++	settings.setValue("settings/mouse_aim_enabled", enabled);
++}
++
++double Settings::GetMouseAimSensitivity() const
++{
++	const double value = settings.value("settings/mouse_aim_sensitivity", 1.0).toDouble();
++	return qIsFinite(value) ? value : 1.0;
++}
++void Settings::SetMouseAimSensitivity(double sensitivity)
++{
++	settings.setValue("settings/mouse_aim_sensitivity", qIsFinite(sensitivity) ? sensitivity : 1.0);
++}
++
++double Settings::GetMouseAimDeadzone() const
++{
++	return qBound(0.0, settings.value("settings/mouse_aim_deadzone", 0.10).toDouble(), 0.5);
++}
++void Settings::SetMouseAimDeadzone(double deadzone)
++{
++	settings.setValue("settings/mouse_aim_deadzone", qBound(0.0, deadzone, 0.5));
++}
++
++double Settings::GetMouseAimCurve() const
++{
++	return qBound(0.3, settings.value("settings/mouse_aim_curve", 1.0).toDouble(), 3.0);
++}
++void Settings::SetMouseAimCurve(double curve)
++{
++	settings.setValue("settings/mouse_aim_curve", qBound(0.3, curve, 3.0));
++}
++
++int Settings::GetMouseAimWindowMs() const
++{
++	return qBound(2, settings.value("settings/mouse_aim_window_ms", 8).toInt(), 32);
++}
++void Settings::SetMouseAimWindowMs(int ms)
++{
++	settings.setValue("settings/mouse_aim_window_ms", qBound(2, ms, 32));
++}
++
++int Settings::GetMouseAimReleaseKey() const
++{
++	return settings.value("settings/mouse_aim_release_key", int(Qt::Key_F8)).toInt();
++}
++void Settings::SetMouseAimReleaseKey(int key)
++{
++	settings.setValue("settings/mouse_aim_release_key", key);
++}
++#endif
+ 
+ bool Settings::GetDpadTouchEnabled() const
+ {
+diff --git a/gui/src/streamsession.cpp b/gui/src/streamsession.cpp
+index 44d7a0e..f2558ee 100755
+--- a/gui/src/streamsession.cpp
++++ b/gui/src/streamsession.cpp
+@@ -303,6 +303,11 @@ StreamSessionConnectInfo::StreamSessionConnectInfo(
+ 	const bool keyboard_controller_enabled_setting = settings->GetKeyboardEnabled();
+ 	this->keyboard_controller_enabled = keyboard_controller_enabled_setting;
+ 	this->mouse_touch_enabled = settings->GetMouseTouchEnabled();
++#ifdef _WIN32
++	mouse_aim = {settings->GetMouseAimEnabled(), settings->GetMouseAimSensitivity(),
++		settings->GetMouseAimDeadzone(), settings->GetMouseAimCurve(),
++		settings->GetMouseAimWindowMs(), settings->GetMouseAimReleaseKey()};
++#endif
+ 	this->enable_keyboard = false;
+ 	this->enable_dualsense = true;
+ 	this->enable_idr_on_fec_failure = settings->GetIDROnFECFailureEnabled();
+@@ -385,6 +390,9 @@ StreamSession::StreamSession(const StreamSessionConnectInfo &connect_info, QObje
+ 	ps5_trigger_intensity(0x00),
+ 	rumble_haptics_connected(false),
+ 	rumble_haptics_on(false)
++#ifdef _WIN32
++	, mouse_aim_config(connect_info.mouse_aim)
++#endif
+ {
+ 	mic_buf.buf = nullptr;
+ 	connected = false;
+@@ -513,6 +521,9 @@ StreamSession::StreamSession(const StreamSessionConnectInfo &connect_info, QObje
+ 	}
+ 
+ 	chiaki_controller_state_set_idle(&keyboard_state);
++#ifdef _WIN32
++	chiaki_controller_state_set_idle(&mouse_state);
++#endif
+ 	chiaki_controller_state_set_idle(&touch_state);
+ 	touch_tracker=QMap<int, uint8_t>();
+ 	mouse_touch_id=-1;
+@@ -898,6 +909,24 @@ void StreamSession::GoHome()
+ 	chiaki_session_go_home(&session);
+ }
+ 
++#ifdef _WIN32
++void StreamSession::SetMouseAimState(int16_t x, int16_t y, Qt::MouseButtons buttons)
++{
++	const uint8_t r2 = buttons.testFlag(Qt::LeftButton) ? 255 : 0;
++	const uint8_t l2 = buttons.testFlag(Qt::RightButton) ? 255 : 0;
++	const uint32_t r3 = buttons.testFlag(Qt::MiddleButton) ? CHIAKI_CONTROLLER_BUTTON_R3 : 0;
++	if(mouse_state.right_x == x && mouse_state.right_y == y && mouse_state.r2_state == r2
++			&& mouse_state.l2_state == l2 && mouse_state.buttons == r3)
++		return;
++	mouse_state.right_x = x;
++	mouse_state.right_y = y;
++	mouse_state.r2_state = r2;
++	mouse_state.l2_state = l2;
++	mouse_state.buttons = r3;
++	SendFeedbackState();
++}
++#endif
++
+ void StreamSession::HandleMousePressEvent(QMouseEvent *event)
+ {
+ 	if(!mouse_touch_enabled)
+@@ -1284,6 +1313,10 @@ void StreamSession::DpadSendFeedbackState()
+ 	chiaki_controller_state_or(&state, &state, &sdeck_state);
+ #endif
+ 	chiaki_controller_state_or(&state, &state, &keyboard_state);
++#ifdef _WIN32
++	if(mouse_aim_config.enabled)
++		chiaki_controller_state_or(&state, &state, &mouse_state);
++#endif
+ 	chiaki_controller_state_or(&state, &state, &touch_state);
+ 
+ 	if(input_block)
+@@ -1340,6 +1373,10 @@ void StreamSession::SendFeedbackState()
+ 	chiaki_controller_state_or(&state, &state, &sdeck_state);
+ #endif
+ 	chiaki_controller_state_or(&state, &state, &keyboard_state);
++#ifdef _WIN32
++	if(mouse_aim_config.enabled)
++		chiaki_controller_state_or(&state, &state, &mouse_state);
++#endif
+ 	chiaki_controller_state_or(&state, &state, &touch_state);
+ 
+ 	if(input_block)

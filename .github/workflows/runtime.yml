@@ -1,0 +1,149 @@
+name: Build Vectis Windows runtime
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [runtime-mouse-aim]
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 120
+    defaults:
+      run:
+        shell: msys2 {0}
+        working-directory: chiaki
+    steps:
+      - name: Disable autocrlf
+        shell: pwsh
+        working-directory: .
+        run: |
+          git config --global core.autocrlf false
+          git config --global core.eol lf
+
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: chiaki-ng/chiaki-ng
+          ref: f30da0aaeb96fc0026cc03683153f682352e7d7c
+          path: chiaki
+          submodules: recursive
+          persist-credentials: false
+
+      - name: Apply runtime patches
+        shell: bash
+        run: |
+          set -euo pipefail
+          export LC_ALL=C
+          for patch in ../patches/*.patch; do
+            git apply --whitespace=error "$patch"
+          done
+
+      - uses: msys2/setup-msys2@3c51bf698df1e37b2261f53cb67797b97761185c # v2
+        with:
+          msystem: mingw64
+          update: true
+          install: git diffutils
+          pacboy: >-
+            ca-certificates:p
+            cc:p
+            cmake:p
+            curl:p
+            fast_float:p
+            fftw:p
+            json-c:p
+            libevent:p
+            lcms2:p
+            libdovi:p
+            meson:p
+            miniupnpc:p
+            gcc:p
+            nasm:p
+            ninja:p
+            openssl:p
+            opus:p
+            pkgconf:p
+            protobuf:p
+            python:p
+            python-psutil:p
+            python-glad:p
+            python-jinja:p
+            python-pip:p
+            qt6-base:p
+            qt6-declarative:p
+            qt6-svg:p
+            shaderc:p
+            speexdsp:p
+            spirv-cross:p
+            vulkan:p
+            vulkan-headers:p
+
+      - name: Install Python protobuf and zip
+        run: |
+          set -euo pipefail
+          wheel=protobuf-7.36.2-py3-none-any.whl
+          curl -fLsS --retry 3 -o "$wheel" "https://files.pythonhosted.org/packages/e4/04/d52c7016b04b6c5108f26691f9d33ec82a9b65d041f1a9c771137693d618/$wheel"
+          echo "bdb3a345d48db958e6ce1f18e508beb0cc981d64f24088427549c866cd039f1e  $wheel" | sha256sum -c -
+          python -m pip install --no-deps --no-index "$wheel"
+          pacman -S --needed --noconfirm git make unzip zip
+
+      - name: Build libplacebo
+        env:
+          LIBPLACEBO_VERSION: 3be579e6c7f6b421d9ac3ab4860edc437c50b3eb
+        run: |
+          set -euo pipefail
+          git clone --no-checkout https://github.com/haasn/libplacebo.git
+          git -C libplacebo checkout --detach "$LIBPLACEBO_VERSION"
+          git -C libplacebo submodule update --init --recursive
+          scripts/build-libplacebo-windows.sh .
+
+      - name: Install pinned FFmpeg build
+        run: |
+          set -euo pipefail
+          dir=ffmpeg-n9.0.2-39-g7adfbe40dc-win64-gpl-shared-9.0
+          curl -fLsS --retry 3 -H 'Accept: application/octet-stream' -o ffmpeg.zip \
+            https://api.github.com/repos/streetpea/FFmpeg-Builds/releases/assets/695135963
+          echo "31065d2bd41cd613bb67248430b4d7a55f5c3653e57fa22e06c676b866170cb4  ffmpeg.zip" | sha256sum -c -
+          unzip -q ffmpeg.zip
+          for part in bin include lib; do cp -a "$dir/$part/." "/mingw64/$part"; done
+
+      - name: Build SDL2 compatibility and HIDAPI
+        run: |
+          set -euo pipefail
+          INSTALL_PREFIX=/mingw64 scripts/build-sdl2-compat.sh .
+          INSTALL_PREFIX=/mingw64 scripts/build-hidapi.sh .
+          cp /mingw64/lib/pkgconfig/sdl2-compat.pc /mingw64/lib/pkgconfig/sdl2.pc
+
+      - name: Configure chiaki-ng
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCHIAKI_ENABLE_CLI=OFF
+
+      - name: Build chiaki-ng
+        run: cmake --build build --config Release --clean-first --target chiaki
+
+      - name: Deploy chiaki-ng
+        run: scripts/deploy-windows-msys2.sh chiaki-ng-Win build/gui/chiaki.exe "$PWD/build/third-party/cpp-steam-tools" /mingw64 gui/src/qml
+
+      - name: Package portable runtime
+        run: |
+          set -euo pipefail
+          name="vectis-runtime-win_x64-1.10.1-${GITHUB_SHA:0:7}"
+          zip -qr "$name.zip" chiaki-ng-Win
+          sha256sum "$name.zip" > "$name.zip.sha256"
+          sha256sum chiaki-ng-Win/chiaki.exe
+          echo "RUNTIME_NAME=$name" >> "$GITHUB_ENV"
+
+      - name: Upload runtime and checksum
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ${{ env.RUNTIME_NAME }}
+          path: |
+            chiaki/${{ env.RUNTIME_NAME }}.zip
+            chiaki/${{ env.RUNTIME_NAME }}.zip.sha256
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7
