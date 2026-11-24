@@ -1,0 +1,23 @@
+diff --git a/gui/src/settings.cpp b/gui/src/settings.cpp
+index 8b5b949..c20393a 100644
+--- a/gui/src/settings.cpp
++++ b/gui/src/settings.cpp
+@@ -2499,5 +2499,18 @@ QMap<Qt::Key, int> Settings::GetControllerMappingForDecoding()
+ 	{
+ 		result[it.value()] = it.key();
+ 	}
++	for(auto it = map.begin(); it != map.end(); ++it)
++	{
++		const QString button_name = GetChiakiControllerButtonName(it.key()).replace(' ', '_').toLower();
++		if(!settings.contains("keymap/" + button_name))
++			continue;
++		const QKeySequence sequence(settings.value("keymap/" + button_name).toString());
++		for(int stroke = 0; stroke < int(sequence.count()); stroke++)
++		{
++			const Qt::Key key = sequence[uint(stroke)].key();
++			if(key != Qt::Key_unknown)
++				result[key] = it.key();
++		}
++	}
+ 	return result;
+ }
