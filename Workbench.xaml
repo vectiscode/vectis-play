@@ -806,7 +806,7 @@
                   <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Sensitivity"/><TextBlock Style="{StaticResource FieldHint}" Text="Higher values reach full stick sooner."/></StackPanel>
                   <StackPanel Grid.Column="1" Width="260" HorizontalAlignment="Left" VerticalAlignment="Top">
                     <TextBox x:Name="AimSensitivity" AutomationProperties.Name="Aim sensitivity"/>
-                    <Slider x:Name="AimSensitivitySlider" Margin="0,10,0,0" Minimum="0.1" Maximum="5" TickFrequency="0.1" IsSnapToTickEnabled="True" Value="{Binding Text, ElementName=AimSensitivity, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsEnabled, ElementName=AimSensitivity}" AutomationProperties.Name="Sensitivity slider"/>
+                    <Slider x:Name="AimSensitivitySlider" Margin="0,10,0,0" Minimum="0.1" Maximum="10" TickFrequency="0.1" IsSnapToTickEnabled="True" Value="{Binding Text, ElementName=AimSensitivity, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsEnabled, ElementName=AimSensitivity}" AutomationProperties.Name="Sensitivity slider"/>
                   </StackPanel>
                 </Grid>
                 <Grid Margin="0,0,0,18">

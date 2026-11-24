@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using Microsoft.Win32;
 
 internal sealed class ConsoleEntry
@@ -110,7 +111,7 @@ internal static class StreamSettings
 		new[] { "Left stick down", "left_stick_down", "S" },
 		new[] { "Left stick right", "left_stick_right", "D" },
 		new[] { "Cross", "cross", "Space" },
-		new[] { "Circle", "moon", "C" },
+		new[] { "Circle", "moon", "Esc,C" },
 		new[] { "Square", "box", "R" },
 		new[] { "Triangle", "pyramid", "F" },
 		new[] { "L1", "l1", "Q" },
@@ -123,7 +124,7 @@ internal static class StreamSettings
 		new[] { "D-Pad Down", "d-pad_down", "Down" },
 		new[] { "D-Pad Left", "d-pad_left", "Left" },
 		new[] { "D-Pad Right", "d-pad_right", "Right" },
-		new[] { "Options", "options", "Esc" },
+		new[] { "Options", "options", "Return" },
 		new[] { "Create", "share", "Backspace" },
 		new[] { "Touchpad", "touchpad", "Tab" },
 		new[] { "PS", "ps", "Home" }
@@ -133,16 +134,31 @@ internal static class StreamSettings
 	// layout only when no key map exists, so edits made in chiaki-ng stay.
 	internal static void WriteDefaultKeyMap(RegistryKey root)
 	{
-		using (RegistryKey existing = root.OpenSubKey("keymap", false))
+		using (RegistryKey existing = root.OpenSubKey("keymap", RegistryKeyPermissionCheck.ReadWriteSubTree))
 		{
 			if (existing != null)
+			{
+				MigrateKeyMap(existing);
 				return;
+			}
 		}
 		using (RegistryKey keymap = root.CreateSubKey("keymap", RegistryKeyPermissionCheck.ReadWriteSubTree))
 		{
 			foreach (string[] row in KeyMapRows)
 				keymap.SetValue(row[1], row[2], RegistryValueKind.String);
 		}
+	}
+
+	// The first defaults put Circle on C and Options on Esc. The smart layout
+	// makes Esc the back key (Circle, with C as a gameplay alternative once the
+	// runtime reads multi-key sequences) and moves Options to Enter. Only
+	// rewrite values still holding a first-run default so custom rebinds stay.
+	private static void MigrateKeyMap(RegistryKey keymap)
+	{
+		if ((keymap.GetValue("moon") as string) == "C")
+			keymap.SetValue("moon", "Esc,C", RegistryValueKind.String);
+		if ((keymap.GetValue("options") as string) == "Esc")
+			keymap.SetValue("options", "Return", RegistryValueKind.String);
 	}
 
 	// Vectis keeps its own registration store so a stock chiaki-ng install is
@@ -427,7 +443,7 @@ internal static class StreamSettings
 		saved["walkkey"] = KnownOrNative(WalkKeyChoices, walkKey ?? "16777251");
 		saved["walkscale"] = ReadPercentField(walkScale, 0.2, 0.8, "45");
 		saved["mouseaim"] = ParseBool(aimEnabled, false) ? "true" : "false";
-		saved["aimsens"] = ReadDoubleField(aimSens, 0.1, 5.0, "1");
+		saved["aimsens"] = ReadDoubleField(aimSens, 0.1, 10.0, "2");
 		saved["aimyratio"] = ReadDoubleField(aimYRatio, 0.25, 4.0, "1");
 		saved["aimdeadzone"] = ReadPercentField(aimDeadzone, 0.0, 0.5, "12");
 		saved["aimcurve"] = ReadDoubleField(aimCurve, 0.3, 3.0, "0.5");
@@ -466,9 +482,7 @@ internal static class StreamSettings
 			string key;
 			if (stored.TryGetValue(row[1], out key))
 			{
-				int comma = key.IndexOf(',');
-				if (comma >= 0)
-					key = key.Substring(0, comma).Trim();
+				key = string.Join(", ", key.Split(',').Select(part => part.Trim()).Where(part => part.Length > 0));
 				if (key.Length == 0)
 					key = null;
 			}
@@ -527,8 +541,8 @@ internal static class StreamSettings
 				case "aimsens":
 					{
 						double n;
-						if (!TryDouble(value, out n) || n < 0.1 || n > 5)
-							return "Sensitivity: enter a number from 0.1 to 5.";
+						if (!TryDouble(value, out n) || n < 0.1 || n > 10)
+							return "Sensitivity: enter a number from 0.1 to 10.";
 						break;
 					}
 				case "aimyratio":

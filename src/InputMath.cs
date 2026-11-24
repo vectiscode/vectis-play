@@ -23,7 +23,7 @@ internal sealed class InputMath
 		public long Dy;
 	}
 
-	public double Sensitivity = 1.0;
+	public double Sensitivity = 2.0;
 	public double YRatio = 1.0;
 	public double Deadzone = 0.12;
 	public double Curve = 0.5;

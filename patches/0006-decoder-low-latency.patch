@@ -1,0 +1,11 @@
+--- a/lib/src/ffmpegdecoder.c
++++ b/lib/src/ffmpegdecoder.c
+@@ -105,6 +105,8 @@
+ 	decoder->codec_context->framerate = decoder->synthetic_framerate;
+ 	decoder->codec_context->pkt_timebase = decoder->synthetic_time_base;
+ 	decoder->codec_context->time_base = decoder->synthetic_time_base;
++	decoder->codec_context->flags |= AV_CODEC_FLAG_LOW_DELAY;
++	decoder->codec_context->thread_type = FF_THREAD_SLICE;
+ 
+ 	if(avcodec_open2(decoder->codec_context, decoder->av_codec, NULL) < 0)
+ 	{

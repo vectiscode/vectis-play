@@ -522,12 +522,12 @@ index 8b5b949..8cca22d 100644
 +
 +double Settings::GetMouseAimSensitivity() const
 +{
-+	const double value = settings.value("settings/mouse_aim_sensitivity", 1.0).toDouble();
-+	return qIsFinite(value) ? value : 1.0;
++	const double value = settings.value("settings/mouse_aim_sensitivity", 2.0).toDouble();
++	return qIsFinite(value) ? value : 2.0;
 +}
 +void Settings::SetMouseAimSensitivity(double sensitivity)
 +{
-+	settings.setValue("settings/mouse_aim_sensitivity", qIsFinite(sensitivity) ? sensitivity : 1.0);
++	settings.setValue("settings/mouse_aim_sensitivity", qIsFinite(sensitivity) ? sensitivity : 2.0);
 +}
 +
 +double Settings::GetMouseAimDeadzone() const
