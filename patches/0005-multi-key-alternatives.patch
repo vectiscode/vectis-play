@@ -1,8 +1,8 @@
 diff --git a/gui/src/settings.cpp b/gui/src/settings.cpp
-index 8b5b949..c20393a 100644
+index 8b5b949..f92aba2 100644
 --- a/gui/src/settings.cpp
 +++ b/gui/src/settings.cpp
-@@ -2499,5 +2499,18 @@ QMap<Qt::Key, int> Settings::GetControllerMappingForDecoding()
+@@ -2499,5 +2499,29 @@ QMap<Qt::Key, int> Settings::GetControllerMappingForDecoding()
  	{
  		result[it.value()] = it.key();
  	}
@@ -14,7 +14,18 @@ index 8b5b949..c20393a 100644
 +		const QKeySequence sequence(settings.value("keymap/" + button_name).toString());
 +		for(int stroke = 0; stroke < int(sequence.count()); stroke++)
 +		{
-+			const Qt::Key key = sequence[uint(stroke)].key();
++			Qt::Key key = sequence[uint(stroke)].key();
++			if(key == Qt::Key_unknown)
++			{
++				switch(int(sequence[uint(stroke)].keyboardModifiers()))
++				{
++				case int(Qt::ShiftModifier): key = Qt::Key_Shift; break;
++				case int(Qt::ControlModifier): key = Qt::Key_Control; break;
++				case int(Qt::AltModifier): key = Qt::Key_Alt; break;
++				case int(Qt::MetaModifier): key = Qt::Key_Meta; break;
++				default: break;
++				}
++			}
 +			if(key != Qt::Key_unknown)
 +				result[key] = it.key();
 +		}
