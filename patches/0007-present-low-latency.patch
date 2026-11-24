@@ -1,0 +1,75 @@
+diff --git a/gui/CMakeLists.txt b/gui/CMakeLists.txt
+index fec9d21..7dec775 100755
+--- a/gui/CMakeLists.txt
++++ b/gui/CMakeLists.txt
+@@ -118,6 +118,9 @@ if (${Qt6WebEngineQuick_FOUND})
+ 	target_compile_definitions(chiaki PRIVATE CHIAKI_HAVE_WEBENGINE)
+ endif()
+ target_link_libraries(chiaki SDL2::SDL2)
++if(WIN32)
++	target_link_libraries(chiaki winmm)
++endif()
+ if(CHIAKI_ENABLE_SPEEX)
+   target_link_libraries(chiaki PkgConfig::SpeexDSP)
+   target_compile_definitions(chiaki PRIVATE CHIAKI_GUI_ENABLE_SPEEX)
+diff --git a/gui/src/main.cpp b/gui/src/main.cpp
+index a4f31ce..b6d7627 100644
+--- a/gui/src/main.cpp
++++ b/gui/src/main.cpp
+@@ -41,6 +41,11 @@ int main(int argc, char *argv[]) { return real_main(argc, argv); }
+ #include <QMap>
+ #include <QSurfaceFormat>
+ 
++#if defined(Q_OS_WIN)
++#include <qt_windows.h>
++#include <timeapi.h>
++#endif
++
+ Q_DECLARE_METATYPE(ChiakiLogLevel)
+ Q_DECLARE_METATYPE(ChiakiRegistEventType)
+ 
+@@ -64,8 +69,20 @@ static const QMap<QString, CLICommand> cli_commands = {
+ int RunStream(QGuiApplication &app, const StreamSessionConnectInfo &connect_info);
+ int RunMain(QGuiApplication &app, Settings *settings, bool exit_app_on_stream_exit);
+ 
++#if defined(Q_OS_WIN)
++class WindowsTimerResolution
++{
++public:
++	WindowsTimerResolution() { timeBeginPeriod(1); }
++	~WindowsTimerResolution() { timeEndPeriod(1); }
++};
++#endif
++
+ int real_main(int argc, char *argv[])
+ {
++#if defined(Q_OS_WIN)
++	WindowsTimerResolution windows_timer_resolution;
++#endif
+ 	qRegisterMetaType<DiscoveryHost>();
+ 	qRegisterMetaType<RegisteredHost>();
+ 	qRegisterMetaType<HostMAC>();
+diff --git a/gui/src/qmlmainwindow.cpp b/gui/src/qmlmainwindow.cpp
+index 34418fe..4d73ae0 100644
+--- a/gui/src/qmlmainwindow.cpp
++++ b/gui/src/qmlmainwindow.cpp
+@@ -3042,7 +3042,7 @@ void QmlMainWindow::presentFrame(ChiakiFfmpegFrame frame, int32_t frames_lost, q
+         }
+         if (!startup_warmup_frame_active)
+             startup_first_real_frame_queued_pending_visibility.storeRelease(1);
+-        scheduleUpdate(false, UpdateRequestReason::PendingFrame);
++        scheduleUpdate(true, UpdateRequestReason::PendingFrame);
+         return;
+     }
+ 
+@@ -7200,7 +7200,9 @@ void QmlMainWindow::render()
+                 const double pace_multiplier = pending_overflow_waiting
+                     ? 0.80
+                     : (present_backpressure_active.loadAcquire() != 0 ? 0.90 : 1.0);
+-                const double paced_interval_s = present_submit_interval_s * pace_multiplier;
++                const double paced_interval_s = bypass_frame_queue && !timer_owned_playback
++                    ? 0.0
++                    : present_submit_interval_s * pace_multiplier;
+                 throttleFramePresentation(paced_interval_s);
+             }
+             else

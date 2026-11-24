@@ -443,12 +443,12 @@ internal static class StreamSettings
 		saved["walkkey"] = KnownOrNative(WalkKeyChoices, walkKey ?? "16777251");
 		saved["walkscale"] = ReadPercentField(walkScale, 0.2, 0.8, "45");
 		saved["mouseaim"] = ParseBool(aimEnabled, false) ? "true" : "false";
-		saved["aimsens"] = ReadDoubleField(aimSens, 0.1, 10.0, "2");
+		saved["aimsens"] = ReadDoubleField(aimSens, 0.1, 10.0, "2.5");
 		saved["aimyratio"] = ReadDoubleField(aimYRatio, 0.25, 4.0, "1");
 		saved["aimdeadzone"] = ReadPercentField(aimDeadzone, 0.0, 0.5, "12");
-		saved["aimcurve"] = ReadDoubleField(aimCurve, 0.3, 3.0, "0.5");
+		saved["aimcurve"] = ReadDoubleField(aimCurve, 0.3, 3.0, "1");
 		saved["aimwindow"] = ReadIntField(aimWindow, 2, 32, "8");
-		saved["aimtau"] = ReadIntField(aimTau, 0, 50, "12");
+		saved["aimtau"] = ReadIntField(aimTau, 0, 50, "4");
 		saved["aimrelease"] = KnownOrNative(AimReleaseChoices, aimRelease ?? "16777271");
 		saved["colorsat"] = ReadPercentField(colorSat, 0.0, 2.0, "100");
 		saved["colorvib"] = ReadPercentField(colorVib, -1.0, 1.0, "0");

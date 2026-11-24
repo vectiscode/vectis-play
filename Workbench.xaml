@@ -830,7 +830,7 @@
                 </Grid>
                 <Grid Margin="0,0,0,18">
                   <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Curve"/><TextBlock Style="{StaticResource FieldHint}" Text="Below 1 makes slow aim finer and keeps flicks fast."/></StackPanel>
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Curve"/><TextBlock Style="{StaticResource FieldHint}" Text="Above 1 makes slow aim finer and keeps flicks fast."/></StackPanel>
                   <StackPanel Grid.Column="1" Width="260" HorizontalAlignment="Left" VerticalAlignment="Top">
                     <TextBox x:Name="AimCurve" AutomationProperties.Name="Aim curve"/>
                     <Slider x:Name="AimCurveSlider" Margin="0,10,0,0" Minimum="0.3" Maximum="3" TickFrequency="0.1" IsSnapToTickEnabled="True" Value="{Binding Text, ElementName=AimCurve, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsEnabled, ElementName=AimCurve}" AutomationProperties.Name="Curve slider"/>

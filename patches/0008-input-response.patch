@@ -1,0 +1,70 @@
+diff --git a/gui/include/mouseaim.h b/gui/include/mouseaim.h
+index b590292..32804f2 100644
+--- a/gui/include/mouseaim.h
++++ b/gui/include/mouseaim.h
+@@ -14,11 +14,11 @@ class StreamSession;
+ struct MouseAimConfig
+ {
+ 	bool enabled = false;
+-	double sensitivity = 1.0;
++	double sensitivity = 2.5;
+ 	double deadzone = 0.12;
+-	double curve = 0.5;
++	double curve = 1.0;
+ 	int window_ms = 8;
+-	int stop_tau_ms = 12;
++	int stop_tau_ms = 4;
+ 	double y_ratio = 1.0;
+ 	int release_key = Qt::Key_F8;
+ };
+diff --git a/gui/src/mouseaim.cpp b/gui/src/mouseaim.cpp
+index bcf8bd8..1b1cfdc 100644
+--- a/gui/src/mouseaim.cpp
++++ b/gui/src/mouseaim.cpp
+@@ -37,7 +37,7 @@ MouseAim::MouseAim(QWindow &window, StreamSession &session)
+ 	tau_ticks = frequency.QuadPart * (config.stop_tau_ms / 1000.0);
+ 	pace_timer.setSingleShot(true);
+ 	pace_timer.setTimerType(Qt::PreciseTimer);
+-	pace_timer.setInterval(2);
++	pace_timer.setInterval(4);
+ 	connect(&pace_timer, &QTimer::timeout, this, [this]() { Flush(CounterNow()); });
+ 	window.installEventFilter(this);
+ 	qGuiApp->installNativeEventFilter(this);
+diff --git a/gui/src/settings.cpp b/gui/src/settings.cpp
+index 88de1fe..fa63c83 100644
+--- a/gui/src/settings.cpp
++++ b/gui/src/settings.cpp
+@@ -1026,12 +1026,12 @@ void Settings::SetMouseAimEnabled(bool enabled)
+ 
+ double Settings::GetMouseAimSensitivity() const
+ {
+-	const double value = settings.value("settings/mouse_aim_sensitivity", 2.0).toDouble();
+-	return qIsFinite(value) ? value : 2.0;
++	const double value = settings.value("settings/mouse_aim_sensitivity", 2.5).toDouble();
++	return qIsFinite(value) ? value : 2.5;
+ }
+ void Settings::SetMouseAimSensitivity(double sensitivity)
+ {
+-	settings.setValue("settings/mouse_aim_sensitivity", qIsFinite(sensitivity) ? sensitivity : 2.0);
++	settings.setValue("settings/mouse_aim_sensitivity", qIsFinite(sensitivity) ? sensitivity : 2.5);
+ }
+ 
+ double Settings::GetMouseAimDeadzone() const
+@@ -1045,7 +1045,7 @@ void Settings::SetMouseAimDeadzone(double deadzone)
+ 
+ double Settings::GetMouseAimCurve() const
+ {
+-	return qBound(0.3, settings.value("settings/mouse_aim_curve", 0.5).toDouble(), 3.0);
++	return qBound(0.3, settings.value("settings/mouse_aim_curve", 1.0).toDouble(), 3.0);
+ }
+ void Settings::SetMouseAimCurve(double curve)
+ {
+@@ -1063,7 +1063,7 @@ void Settings::SetMouseAimWindowMs(int ms)
+ 
+ int Settings::GetMouseAimStopTauMs() const
+ {
+-	return qBound(0, settings.value("settings/mouse_aim_stop_tau_ms", 12).toInt(), 50);
++	return qBound(0, settings.value("settings/mouse_aim_stop_tau_ms", 4).toInt(), 50);
+ }
+ void Settings::SetMouseAimStopTauMs(int ms)
+ {
