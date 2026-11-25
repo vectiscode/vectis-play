@@ -513,7 +513,7 @@ internal sealed class Controller : IDisposable
 			return "lowlatency";
 		if (scaling == "ewa_lanczossharp" && _vsync.IsChecked != true && buffer == "20" && bitrate == "32000")
 			return "balanced";
-		if (scaling == "ewa_lanczossharp" && _vsync.IsChecked != true && buffer == "30" && bitrate == "45000")
+		if (scaling == "preset_high_quality_advanced_spatial" && _vsync.IsChecked != true && buffer == "30" && bitrate == "45000")
 			return "cinema";
 		return "custom";
 	}
@@ -582,7 +582,7 @@ internal sealed class Controller : IDisposable
 			}
 			else
 			{
-				SelectComboValue(_scaling, "ewa_lanczossharp");
+				SelectComboValue(_scaling, "preset_high_quality_advanced_spatial");
 				_vsync.IsChecked = false;
 				_audioBuffer.Text = "30";
 				_bitrate.Text = "45000";

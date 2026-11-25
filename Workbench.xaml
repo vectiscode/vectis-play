@@ -615,7 +615,7 @@
                   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="14"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
 
                   <StackPanel Grid.Row="0" Grid.Column="0">
-                    <TextBlock Style="{StaticResource FieldLabel}" Text="Performance" Height="28" Padding="0,4,0,0" ToolTip="All presets keep vertical sync off for lower latency. Balanced is the everyday choice. Cinema uses the highest bitrate, debanding and detail. All use direct frame mapping."/>
+                    <TextBlock Style="{StaticResource FieldLabel}" Text="Performance" Height="28" Padding="0,4,0,0" ToolTip="All presets keep vertical sync off for lower latency and use direct frame mapping. Balanced is the everyday choice. Cinema adds the highest bitrate plus neural network upscaling for sharper detail on high resolution screens."/>
                     <ComboBox x:Name="PerformancePreset" Margin="0,6,0,0" AutomationProperties.Name="Performance preset"/>
                   </StackPanel>
                   <StackPanel Grid.Row="0" Grid.Column="2">

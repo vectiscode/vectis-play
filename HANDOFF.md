@@ -23,11 +23,15 @@ Original scratch archive: `C:\Users\jojo\.t3\scratch\2026-11-22-build-a-lean-loc
 
 ## Current quality-first experiment
 
-The registry is intentionally set to 1080p, 60 fps, H.265, 32000 kbps, Vulkan decode/render, custom `ewa_lanczossharp`, debanding, blue-noise dithering, no frame mixer, direct frame mapping on, VSync off and `packet_loss_reported_max=0.05`. `idr_on_fec_failure` is off. This matches the Balanced preset and needs a real PS5 A/B test. Do not call it verified until the user playtests it.
+The registry is intentionally set to 1080p, 60 fps, H.265, 45000 kbps, Vulkan decode/render, `high_quality_advanced_spatial` (FSRCNNX x2 16 neural upscale on 1440p fullscreen), no frame mixer, direct frame mapping on, VSync off, 30 ms audio buffer and `packet_loss_reported_max=0.05`. `idr_on_fec_failure` is off. This matches the Cinema preset and needs a real PS5 A/B test. Do not call it verified until the user playtests it.
+
+The Cinema preset uses `preset_high_quality_advanced_spatial` scaling. Balanced stays on custom `ewa_lanczossharp` at 32000 kbps. The spatial hook only engages when upscaling by at least 1.2x, which 1080p on 1440p fullscreen satisfies (1.33x).
+
+Patch `0009-receive-buffer.patch` is written and validated but NOT in the shipped runtime. It raises the Takion UDP socket receive buffer from 100 KB to 4 MB in both the LAN and PSN socket paths while keeping the wire `a_rwnd` unchanged. It requires a vectis.4 CI build (workflow_dispatch in `.github/workflows/runtime.yml`) before it has any effect. Further vectis.4 candidates not yet written: shorter packet reorder stall, controller event coalescing, mouse stop decay rework.
 
 The old quality problem was largely self-inflicted: low bitrate plus the fast placebo preset disabled debanding, dithering, high-quality chroma scaling and color processing. Do not map launcher's quality modes back to `fast`.
 
-The simple launcher presets are Low latency, Balanced and Cinema. Balanced is 32000 kbps and Cinema is 45000 kbps. Low latency still uses high-quality scaling, not `fast`.
+The simple launcher presets are Low latency, Balanced and Cinema. Balanced is 32000 kbps and Cinema is 45000 kbps with neural spatial upscaling. Low latency still uses high-quality scaling, not `fast`.
 
 Controller launcher navigation is implemented through XInput in `src/GamepadNav.cs`. Native DualSense launcher navigation is not implemented because XInput does not expose it without Steam Input or DS4Windows translation.
 
