@@ -22,7 +22,7 @@
     <SolidColorBrush x:Key="FocusRing" Color="#FFFFFF"/>
     <SolidColorBrush x:Key="FocusHalo" Color="#40FFFFFF"/>
     <FontFamily x:Key="Display">Segoe UI Variable Display, Segoe UI</FontFamily>
-    <FontFamily x:Key="Mono">Cascadia Mono, Consolas</FontFamily>
+    <FontFamily x:Key="Mono">Segoe UI Variable Text, Segoe UI</FontFamily>
 
     <!-- Text roles -->
     <Style x:Key="Eyebrow" TargetType="TextBlock">
@@ -46,8 +46,19 @@
       <Setter Property="Background" Value="{StaticResource Panel}"/>
       <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
       <Setter Property="BorderThickness" Value="1"/>
-      <Setter Property="CornerRadius" Value="10"/>
-      <Setter Property="Padding" Value="24,20"/>
+      <Setter Property="CornerRadius" Value="12"/>
+      <Setter Property="Padding" Value="28,24"/>
+      <Style.Triggers>
+        <EventTrigger RoutedEvent="Loaded">
+          <BeginStoryboard>
+            <Storyboard>
+              <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0.35" To="1" Duration="0:0:0.28">
+                <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+              </DoubleAnimation>
+            </Storyboard>
+          </BeginStoryboard>
+        </EventTrigger>
+      </Style.Triggers>
     </Style>
     <Style x:Key="Tile" TargetType="Border">
       <Setter Property="Background" Value="{StaticResource Field}"/>
@@ -120,12 +131,25 @@
         <Setter.Value>
           <ControlTemplate TargetType="Button">
             <Grid>
-              <Border x:Name="Halo" Margin="-4" CornerRadius="10" BorderThickness="2" BorderBrush="{StaticResource FocusHalo}" Visibility="Hidden"/>
-              <Border x:Name="Face" CornerRadius="7" Background="{StaticResource Raised}" BorderBrush="{StaticResource Line2}" BorderThickness="1" Padding="18,0">
+              <Border x:Name="Halo" Margin="-3" CornerRadius="9" BorderThickness="1" BorderBrush="{StaticResource FocusHalo}" Visibility="Hidden"/>
+              <Border x:Name="Face" CornerRadius="7" Background="{StaticResource Raised}" BorderBrush="{StaticResource Line2}" BorderThickness="1" Padding="18,0" RenderTransformOrigin="0.5,0.5">
+                <Border.RenderTransform><ScaleTransform x:Name="FaceScale" ScaleX="1" ScaleY="1"/></Border.RenderTransform>
                 <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True" TextElement.Foreground="{TemplateBinding Foreground}"/>
               </Border>
             </Grid>
             <ControlTemplate.Triggers>
+              <EventTrigger RoutedEvent="MouseEnter">
+                <BeginStoryboard><Storyboard>
+                  <DoubleAnimation Storyboard.TargetName="FaceScale" Storyboard.TargetProperty="ScaleX" To="1.012" Duration="0:0:0.14"><DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction></DoubleAnimation>
+                  <DoubleAnimation Storyboard.TargetName="FaceScale" Storyboard.TargetProperty="ScaleY" To="1.012" Duration="0:0:0.14"><DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction></DoubleAnimation>
+                </Storyboard></BeginStoryboard>
+              </EventTrigger>
+              <EventTrigger RoutedEvent="MouseLeave">
+                <BeginStoryboard><Storyboard>
+                  <DoubleAnimation Storyboard.TargetName="FaceScale" Storyboard.TargetProperty="ScaleX" To="1" Duration="0:0:0.18"><DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction></DoubleAnimation>
+                  <DoubleAnimation Storyboard.TargetName="FaceScale" Storyboard.TargetProperty="ScaleY" To="1" Duration="0:0:0.18"><DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction></DoubleAnimation>
+                </Storyboard></BeginStoryboard>
+              </EventTrigger>
               <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Face" Property="Background" Value="#1C1C1C"/><Setter TargetName="Face" Property="BorderBrush" Value="#555555"/></Trigger>
               <Trigger Property="IsPressed" Value="True"><Setter TargetName="Face" Property="Background" Value="#050505"/></Trigger>
               <Trigger Property="IsKeyboardFocused" Value="True">
@@ -149,8 +173,9 @@
         <Setter.Value>
           <ControlTemplate TargetType="Button">
             <Grid>
-              <Border x:Name="Halo" Margin="-5" CornerRadius="11" BorderThickness="2" BorderBrush="{StaticResource FocusRing}" Visibility="Hidden"/>
-              <Border x:Name="Face" CornerRadius="7" BorderThickness="0" Padding="20,0">
+              <Border x:Name="Halo" Margin="-3" CornerRadius="9" BorderThickness="1" BorderBrush="#80FFFFFF" Visibility="Hidden"/>
+              <Border x:Name="Face" CornerRadius="7" BorderThickness="0" Padding="20,0" RenderTransformOrigin="0.5,0.5">
+                <Border.RenderTransform><ScaleTransform x:Name="FaceScale" ScaleX="1" ScaleY="1"/></Border.RenderTransform>
                 <Border.Background>
                   <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
                     <GradientStop Color="#FFFFFF" Offset="0"/>
@@ -161,6 +186,18 @@
               </Border>
             </Grid>
             <ControlTemplate.Triggers>
+              <EventTrigger RoutedEvent="MouseEnter">
+                <BeginStoryboard><Storyboard>
+                  <DoubleAnimation Storyboard.TargetName="FaceScale" Storyboard.TargetProperty="ScaleX" To="1.018" Duration="0:0:0.16"><DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction></DoubleAnimation>
+                  <DoubleAnimation Storyboard.TargetName="FaceScale" Storyboard.TargetProperty="ScaleY" To="1.018" Duration="0:0:0.16"><DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction></DoubleAnimation>
+                </Storyboard></BeginStoryboard>
+              </EventTrigger>
+              <EventTrigger RoutedEvent="MouseLeave">
+                <BeginStoryboard><Storyboard>
+                  <DoubleAnimation Storyboard.TargetName="FaceScale" Storyboard.TargetProperty="ScaleX" To="1" Duration="0:0:0.2"><DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction></DoubleAnimation>
+                  <DoubleAnimation Storyboard.TargetName="FaceScale" Storyboard.TargetProperty="ScaleY" To="1" Duration="0:0:0.2"><DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction></DoubleAnimation>
+                </Storyboard></BeginStoryboard>
+              </EventTrigger>
               <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Face" Property="Background" Value="#FFFFFF"/></Trigger>
               <Trigger Property="IsPressed" Value="True"><Setter TargetName="Face" Property="Background" Value="#BDBDBD"/></Trigger>
               <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Halo" Property="Visibility" Value="Visible"/></Trigger>
@@ -182,7 +219,7 @@
         <Setter.Value>
           <ControlTemplate TargetType="Button">
             <Grid>
-              <Border x:Name="Halo" Margin="-4" CornerRadius="10" BorderThickness="2" BorderBrush="{StaticResource FocusHalo}" Visibility="Hidden"/>
+              <Border x:Name="Halo" Margin="-3" CornerRadius="9" BorderThickness="1" BorderBrush="{StaticResource FocusHalo}" Visibility="Hidden"/>
               <Border x:Name="Face" CornerRadius="7" Background="Transparent" BorderBrush="{StaticResource Signal}" BorderThickness="1.5" Padding="18,0">
                 <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True" TextElement.Foreground="{TemplateBinding Foreground}"/>
               </Border>
@@ -217,7 +254,7 @@
         <Setter.Value>
           <ControlTemplate TargetType="TextBox">
             <Grid>
-              <Border x:Name="Halo" Margin="-4" CornerRadius="10" BorderThickness="2" BorderBrush="{StaticResource FocusHalo}" Visibility="Hidden"/>
+              <Border x:Name="Halo" Margin="-3" CornerRadius="9" BorderThickness="1" BorderBrush="{StaticResource FocusHalo}" Visibility="Hidden"/>
               <Border x:Name="Frame" Background="{StaticResource Field}" BorderBrush="{StaticResource Line2}" BorderThickness="1" CornerRadius="7">
                 <ScrollViewer x:Name="PART_ContentHost" Padding="{TemplateBinding Padding}" VerticalAlignment="Center" Focusable="False" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden"/>
               </Border>
@@ -275,7 +312,7 @@
         <Setter.Value>
           <ControlTemplate TargetType="ComboBox">
             <Grid>
-              <Border x:Name="Halo" Margin="-4" CornerRadius="10" BorderThickness="2" BorderBrush="{StaticResource FocusHalo}" Visibility="Hidden"/>
+              <Border x:Name="Halo" Margin="-3" CornerRadius="9" BorderThickness="1" BorderBrush="{StaticResource FocusHalo}" Visibility="Hidden"/>
               <Border x:Name="Frame" Background="{StaticResource Field}" BorderBrush="{StaticResource Line2}" BorderThickness="1" CornerRadius="7"/>
               <ToggleButton Focusable="False" ClickMode="Press" Background="Transparent" IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
                 <ToggleButton.Template>
@@ -473,7 +510,6 @@
               <Border x:Name="Row" CornerRadius="8" Background="Transparent" BorderThickness="2" BorderBrush="Transparent"/>
               <Border x:Name="Bar" Width="4" Height="22" HorizontalAlignment="Left" Margin="0" CornerRadius="2" Background="{StaticResource Signal}" Visibility="Hidden"/>
               <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="18,0,0,0">
-                <TextBlock x:Name="Num" Text="{TemplateBinding Tag}" FontFamily="Consolas" FontSize="12" FontWeight="Normal" Foreground="#777777" Width="30" VerticalAlignment="Center"/>
                 <ContentPresenter ContentSource="Header" VerticalAlignment="Center" RecognizesAccessKey="True" TextElement.Foreground="{TemplateBinding Foreground}"/>
               </StackPanel>
             </Grid>
@@ -482,7 +518,6 @@
               <Trigger Property="IsSelected" Value="True">
                 <Setter TargetName="Row" Property="Background" Value="#181818"/>
                 <Setter TargetName="Bar" Property="Visibility" Value="Visible"/>
-                <Setter TargetName="Num" Property="Foreground" Value="{StaticResource Signal}"/>
               </Trigger>
               <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Row" Property="BorderBrush" Value="{StaticResource FocusRing}"/></Trigger>
             </ControlTemplate.Triggers>
@@ -503,7 +538,7 @@
           <ControlTemplate TargetType="TabControl">
             <Grid>
               <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="224"/>
+                <ColumnDefinition Width="204"/>
                 <ColumnDefinition Width="*"/>
               </Grid.ColumnDefinitions>
               <Border Grid.Column="0" Background="{StaticResource Rail}" BorderBrush="{StaticResource Line}" BorderThickness="0,0,1,0">
@@ -542,14 +577,7 @@
           <StackPanel Style="{StaticResource Page}">
 
             <!-- Hero: console, state and the one dominant action -->
-            <Border CornerRadius="12" BorderBrush="#2A2A2A" BorderThickness="1" Padding="26,22" ClipToBounds="True">
-              <Border.Background>
-                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                  <GradientStop Color="#080808" Offset="0"/>
-                  <GradientStop Color="#0B0B0B" Offset="0.55"/>
-                  <GradientStop Color="#151515" Offset="1"/>
-                </LinearGradientBrush>
-              </Border.Background>
+            <Border Padding="2,18,2,26" Margin="0,0,0,2" BorderThickness="0">
               <Grid>
                 <Grid.ColumnDefinitions>
                   <ColumnDefinition Width="*"/>
@@ -562,12 +590,12 @@
                       <TextBlock x:Name="SessionState" Text="READY" Margin="8,0,0,0" FontFamily="{StaticResource Mono}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource Signal}" VerticalAlignment="Center"/>
                     </StackPanel>
                   </Border>
-                  <TextBlock x:Name="SessionTitle" Style="{StaticResource PageTitle}" Text="Pair your PS5" Margin="0,10,0,4" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                  <TextBlock x:Name="SessionTitle" Style="{StaticResource PageTitle}" FontSize="44" Text="Pair your PS5" Margin="0,12,0,6" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                   <TextBlock x:Name="SessionDetail" Style="{StaticResource Margin}" Text="Keep the console awake on the same network as this PC."/>
                   <ComboBox x:Name="ConsoleList" Visibility="Collapsed" Margin="0,14,0,0" MaxWidth="360" HorizontalAlignment="Stretch" AutomationProperties.Name="Console"/>
                 </StackPanel>
                 <StackPanel Grid.Column="1" Width="268" VerticalAlignment="Center">
-                  <Button x:Name="Primary" Style="{StaticResource Accent}" Content="Pair PS5" Height="64" FontSize="20" FontFamily="{StaticResource Display}" MinWidth="0" AutomationProperties.Name="Connect"/>
+                  <Button x:Name="Primary" Style="{StaticResource Accent}" Content="Pair PS5" Height="56" FontSize="18" FontFamily="{StaticResource Display}" MinWidth="0" AutomationProperties.Name="Connect"/>
                   <DockPanel Margin="0,10,0,0" LastChildFill="True">
                     <Button x:Name="Manage" DockPanel.Dock="Left" Content="Consoles" Visibility="Collapsed" Width="129" MinWidth="0" Margin="0,0,10,0" ToolTip="Pair another PS5 or manage paired consoles" AutomationProperties.Name="Pair or manage consoles"/>
                     <Button x:Name="NativeSettings" Content="Controller" MinWidth="0" ToolTip="Open the player's own settings for controller mapping and extra options" AutomationProperties.Name="Controller settings"/>
@@ -580,7 +608,6 @@
             <Border x:Name="QuickSetupCard" Style="{StaticResource Card}" Margin="0,14,0,0" Padding="24,18,24,20">
               <StackPanel>
                 <DockPanel Margin="0,0,0,12">
-                  <TextBlock DockPanel.Dock="Right" Style="{StaticResource FieldHint}" Margin="16,0,0,0" VerticalAlignment="Center" Text="Used the next time you connect"/>
                   <TextBlock Style="{StaticResource CardTitle}" Text="Quick setup" VerticalAlignment="Center"/>
                 </DockPanel>
                 <Grid>
@@ -641,7 +668,7 @@
             </Border>
 
             <!-- Network check: one line until a check runs, details below -->
-            <Border Style="{StaticResource Card}" Margin="0,14,0,0" Padding="24,16">
+            <Border Margin="0,8,0,0" Padding="2,8" BorderThickness="0">
               <StackPanel>
                 <Grid>
                   <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
@@ -705,7 +732,6 @@
                 <TextBlock Style="{StaticResource Eyebrow}" Text="STREAM"/>
                 <TextBlock Style="{StaticResource PageTitle}" Text="Picture size and bandwidth" Margin="0,2,0,0"/>
               </StackPanel>
-              <Path HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,6,0" Stroke="#666666" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Data="M0 20H14L20 4L30 36L38 12L44 20H80" Width="80" Height="40" Stretch="None"/>
             </Grid>
             <Border Style="{StaticResource Card}">
               <StackPanel>
@@ -756,7 +782,6 @@
                 <TextBlock Style="{StaticResource Eyebrow}" Text="PICTURE"/>
                 <TextBlock Style="{StaticResource PageTitle}" Text="Decode and display" Margin="0,2,0,0"/>
               </StackPanel>
-              <Path HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,6,0" Stroke="#666666" StrokeThickness="2" StrokeLineJoin="Round" Data="M0 10V0H10M60 0H70V10M70 30V40H60M10 40H0V30M26 20H44" Width="70" Height="40" Stretch="None"/>
             </Grid>
             <Border Style="{StaticResource Card}">
               <StackPanel>
@@ -881,7 +906,6 @@
                 <TextBlock Style="{StaticResource Eyebrow}" Text="SOUND"/>
                 <TextBlock Style="{StaticResource PageTitle}" Text="Volume and audio delay" Margin="0,2,0,0"/>
               </StackPanel>
-              <Path HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,6,0" Stroke="#666666" StrokeThickness="3" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Data="M4 28V12M16 34V6M28 24V16M40 36V4M52 26V14M64 30V10" Width="68" Height="40" Stretch="None"/>
             </Grid>
             <Border Style="{StaticResource Card}">
               <StackPanel>
@@ -928,7 +952,6 @@
                 <TextBlock Style="{StaticResource Eyebrow}" Text="CONTROLS"/>
                 <TextBlock Style="{StaticResource PageTitle}" Text="Keyboard and mouse" Margin="0,2,0,0"/>
               </StackPanel>
-              <Path HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,6,0" Stroke="#666666" StrokeThickness="2" StrokeLineJoin="Round" Data="M10 15H30Q34 15 34 19V27Q34 31 30 31H10Q6 31 6 27V19Q6 15 10 15ZM13 20H17M15 18V22M25 22H29M27 20V24" Width="40" Height="40" Stretch="None"/>
             </Grid>
 
             <Border BorderBrush="{StaticResource Signal}" BorderThickness="2,0,0,0" Padding="14,2,0,2" Margin="0,0,0,16">
@@ -1134,7 +1157,7 @@
     </TabControl>
 
     <!-- Shared footer: draft state, the latest result and the draft actions -->
-    <Border VerticalAlignment="Bottom" Height="72" Margin="224,0,0,0" Background="#050505" BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0">
+    <Border VerticalAlignment="Bottom" Height="72" Margin="204,0,0,0" Background="#050505" BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0">
       <Grid Margin="32,0,28,0">
         <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
         <StackPanel VerticalAlignment="Center" Margin="0,0,18,0">
@@ -1152,7 +1175,7 @@
     </Border>
 
     <!-- Rail footer: view switch and pad legend, outside the tab template so the controller can own it -->
-    <Border HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="224" Background="{StaticResource Rail}" BorderBrush="{StaticResource Line}" BorderThickness="0,1,1,0" Padding="20,16,20,18">
+    <Border HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="204" Background="{StaticResource Rail}" BorderBrush="{StaticResource Line}" BorderThickness="0,1,1,0" Padding="20,16,20,18">
       <StackPanel>
         <TextBlock x:Name="PadHint" Visibility="Collapsed" Margin="0,0,0,14" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Muted}" TextWrapping="Wrap" LineHeight="17"
                    Text="Controller ready&#10;A select   B back&#10;LB RB switch page"/>
