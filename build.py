@@ -26,6 +26,7 @@ ZIP_URL = ("https://github.com/vectiscode/vectis-play/releases/download/"
            "runtime-1.10.1-vectis.3/" + ZIP_NAME)
 ZIP_SHA256 = "9eab9fbd9fa44930ecf4fe2072333ef385318e5cf09cb0acb3d5b17bed39f1ec"
 EXE_SHA256 = "19054310d0cb4de3a014b0df1eea98ec0dc7f3b3e4e04a3ae7d4235d36a80261"
+UPSTREAM_COMMIT = "f30da0aaeb96fc0026cc03683153f682352e7d7c"
 CSC = Path(r"C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe")
 
 
@@ -47,7 +48,7 @@ def sha256_file(path):
 
 
 def require_licenses():
-    missing = [rel for rel in ("COPYING", "LICENSES/AGPL-3.0-only-OpenSSL.txt")
+    missing = [rel for rel in ("COPYING", "LICENSES/AGPL-3.0-only-OpenSSL.txt", "LICENSES/Vectis-brand-MIT.txt")
                if not (ROOT / rel).exists()]
     if missing:
         fail("missing shipped license file(s): " + ", ".join(missing))
@@ -66,7 +67,7 @@ def ensure_zip():
     return zip_path
 
 
-def stage_backend(zip_path):
+def stage_backend(zip_path=None):
     backend = ROOT / "runtime"
     exe = backend / "chiaki-ng-Win" / "chiaki.exe"
     if exe.exists() and sha256_file(exe) == EXE_SHA256:
@@ -75,6 +76,8 @@ def stage_backend(zip_path):
     if backend.exists():
         fail("runtime/ exists but chiaki.exe is missing or fails verification; "
              "refusing to modify it, move it aside manually to rebuild")
+    if zip_path is None:
+        zip_path = ensure_zip()
 
     with tempfile.TemporaryDirectory(prefix=".vectis-stage-", dir=ROOT) as staging:
         payload = Path(staging) / "payload"
@@ -91,8 +94,14 @@ def stage_backend(zip_path):
 def check_patches():
     upstream = ROOT / "upstream"
     patches = sorted((ROOT / "patches").glob("*.patch"))
-    if not (upstream / ".git").exists() or not patches:
+    if not patches:
         return
+    if not (upstream / ".git").exists():
+        print("upstream/ not present, skipping patch validation")
+        return
+    upstream_head = subprocess.check_output(["git", "-C", str(upstream), "rev-parse", "HEAD"], text=True).strip()
+    if upstream_head != UPSTREAM_COMMIT:
+        fail("upstream/ is at " + upstream_head + ", want chiaki-ng " + UPSTREAM_COMMIT)
     # Apply in order to a throwaway index so later patches see earlier ones
     # while the upstream working tree stays untouched.
     with tempfile.TemporaryDirectory(prefix=".vectis-index-", dir=ROOT) as scratch:
@@ -135,8 +144,7 @@ def compile_launcher():
 
 def main():
     require_licenses()
-    zip_path = ensure_zip()
-    stage_backend(zip_path)
+    stage_backend()
     check_patches()
     compile_launcher()
     print("build complete")

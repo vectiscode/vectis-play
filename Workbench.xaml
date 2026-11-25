@@ -34,6 +34,20 @@
       <Setter Property="FontSize" Value="32"/>
       <Setter Property="Foreground" Value="{StaticResource Paper}"/>
     </Style>
+    <Style x:Key="CardTitle" TargetType="TextBlock">
+      <Setter Property="FontFamily" Value="{StaticResource Display}"/>
+      <Setter Property="FontStretch" Value="SemiCondensed"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="FontSize" Value="18"/>
+      <Setter Property="Foreground" Value="{StaticResource Paper}"/>
+    </Style>
+    <Style x:Key="Card" TargetType="Border">
+      <Setter Property="Background" Value="{StaticResource Panel}"/>
+      <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="4"/>
+      <Setter Property="Padding" Value="22,18"/>
+    </Style>
     <Style x:Key="FieldLabel" TargetType="TextBlock">
       <Setter Property="FontSize" Value="14"/>
       <Setter Property="FontWeight" Value="SemiBold"/>
@@ -68,7 +82,7 @@
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="Button">
-            <Border x:Name="Face" MinWidth="104" Height="38" CornerRadius="2" Background="#1E1A17" BorderBrush="{StaticResource Line2}" BorderThickness="1" Padding="18,0">
+            <Border x:Name="Face" MinWidth="104" MinHeight="38" CornerRadius="2" Background="#1E1A17" BorderBrush="{StaticResource Line2}" BorderThickness="1" Padding="18,0">
               <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True" TextElement.Foreground="{TemplateBinding Foreground}"/>
             </Border>
             <ControlTemplate.Triggers>
@@ -93,7 +107,7 @@
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="Button">
-            <Border x:Name="Face" MinWidth="104" Height="38" CornerRadius="2" Background="{StaticResource Signal}" BorderBrush="{StaticResource Signal}" BorderThickness="1" Padding="18,0">
+            <Border x:Name="Face" MinWidth="104" MinHeight="38" CornerRadius="2" Background="{StaticResource Signal}" BorderBrush="{StaticResource Signal}" BorderThickness="1" Padding="18,0">
               <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True" TextElement.Foreground="{TemplateBinding Foreground}"/>
             </Border>
             <ControlTemplate.Triggers>
@@ -122,7 +136,7 @@
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="Button">
-            <Border x:Name="Face" MinWidth="104" Height="38" CornerRadius="2" Background="Transparent" BorderBrush="{StaticResource Signal}" BorderThickness="1" Padding="18,0">
+            <Border x:Name="Face" MinWidth="104" MinHeight="38" CornerRadius="2" Background="Transparent" BorderBrush="{StaticResource Signal}" BorderThickness="1" Padding="18,0">
               <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True" TextElement.Foreground="{TemplateBinding Foreground}"/>
             </Border>
             <ControlTemplate.Triggers>
@@ -431,148 +445,224 @@
     <TabControl x:Name="Pages" TabStripPlacement="Left">
 
       <!-- 01 SESSION -->
-      <TabItem Header="Session" Tag="01">
+      <TabItem x:Name="SessionTab" Header="Session" Tag="01">
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
-        <Grid Margin="40,30,40,16">
-          <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-          </Grid.RowDefinitions>
-          <StackPanel Grid.Row="0" Margin="0,0,0,22">
-            <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="4" Padding="20,16">
+          <StackPanel Margin="40,30,40,18" MaxWidth="860" HorizontalAlignment="Left">
+
+            <!-- Home hero: identity, state and the one dominant action -->
+            <Border Style="{StaticResource Card}" Padding="26,18,26,14">
               <Grid>
                 <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="*" MinWidth="200"/>
-                  <ColumnDefinition Width="240"/>
+                  <ColumnDefinition Width="*"/>
+                  <ColumnDefinition Width="230"/>
                 </Grid.ColumnDefinitions>
-                <Border Grid.Column="0" Background="{StaticResource Field}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="3" Height="156" ClipToBounds="True">
-                  <Canvas x:Name="LinkTrace"/>
-                </Border>
-                <StackPanel Grid.Column="1" Margin="18,0,0,0">
-                  <UniformGrid Columns="2" Rows="3">
-                    <StackPanel Margin="0,0,12,10">
-                      <TextBlock Text="LINK" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Muted}"/>
-                      <TextBlock x:Name="LinkKind" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource Paper}" Margin="0,3,0,0" TextWrapping="Wrap" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
-                    </StackPanel>
-                    <StackPanel Margin="0,0,0,10">
-                      <TextBlock Text="SIGNAL" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Muted}"/>
-                      <TextBlock x:Name="LinkSignal" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource Paper}" Margin="0,3,0,0" TextWrapping="Wrap" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
-                    </StackPanel>
-                    <StackPanel Margin="0,0,12,10">
-                      <TextBlock Text="RECEIVE" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Muted}"/>
-                      <TextBlock x:Name="LinkReceive" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource Paper}" Margin="0,3,0,0" TextWrapping="Wrap" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
-                    </StackPanel>
-                    <StackPanel Margin="0,0,0,10">
-                      <TextBlock Text="MEDIAN" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Muted}"/>
-                      <TextBlock x:Name="LinkMedian" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource Paper}" Margin="0,3,0,0" TextWrapping="Wrap" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
-                    </StackPanel>
-                    <StackPanel Margin="0,0,12,10">
-                      <TextBlock Text="P95" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Muted}"/>
-                      <TextBlock x:Name="LinkP95" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource Paper}" Margin="0,3,0,0" TextWrapping="Wrap" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
-                    </StackPanel>
-                    <StackPanel Margin="0,0,0,10">
-                      <TextBlock Text="SPIKES · LOSS" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Muted}"/>
-                      <TextBlock x:Name="LinkSpikes" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource Paper}" Margin="0,3,0,0" TextWrapping="Wrap" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
-                    </StackPanel>
-                  </UniformGrid>
-                  <WrapPanel Margin="0,12,0,0">
-                    <Button x:Name="CheckLink" Content="Check link" MinWidth="112" Margin="0,0,10,0"/>
-                    <Button x:Name="UseLinkBitrate" Style="{StaticResource SignalOutline}" Content="Use 12000 kbps" Visibility="Collapsed" MinWidth="128"/>
+                <StackPanel Grid.Column="0" Margin="0,0,24,0">
+                  <TextBlock Style="{StaticResource Eyebrow}" Text="HOME"/>
+                  <TextBlock x:Name="SessionTitle" Style="{StaticResource PageTitle}" Text="Pair your PS5" Margin="0,2,0,8" TextWrapping="Wrap"/>
+                  <TextBlock x:Name="SessionDetail" Style="{StaticResource Margin}" Text="Keep the console awake on the same network as this PC." MaxWidth="510"/>
+                  <ComboBox x:Name="ConsoleList" Visibility="Collapsed" Margin="0,14,0,0" MaxWidth="420" HorizontalAlignment="Left" Width="420" AutomationProperties.Name="Console"/>
+                  <WrapPanel Margin="0,16,0,0">
+                    <Button x:Name="Manage" Content="Pair or manage" Visibility="Collapsed" Margin="0,0,10,4" FontSize="13"/>
+                    <Button x:Name="NativeSettings" Content="Controller settings" Margin="0,0,10,4" FontSize="13"/>
                   </WrapPanel>
-                  <TextBlock x:Name="LinkNotes" Style="{StaticResource FieldHint}" Margin="0,10,0,0"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                  <Border Background="{StaticResource Field}" BorderBrush="{StaticResource Line2}" BorderThickness="1" CornerRadius="2" Padding="10,5" HorizontalAlignment="Left" Margin="0,0,0,14">
+                    <TextBlock x:Name="SessionState" Text="READY" FontFamily="{StaticResource Mono}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource Signal}"/>
+                  </Border>
+                  <Button x:Name="Primary" Style="{StaticResource Accent}" Content="Pair PS5" Width="220" Height="56" FontSize="18" MinWidth="0"/>
                 </StackPanel>
               </Grid>
             </Border>
-            <TextBlock Style="{StaticResource FieldHint}" Margin="4,8,0,0" Text="Measures this PC's hop to your router for 10 seconds. The console is not contacted."/>
+
+            <!-- Simple mode: the few choices most players need -->
+            <Border x:Name="QuickSetupCard" Style="{StaticResource Card}" Margin="0,16,0,0">
+              <StackPanel>
+                <Grid Margin="0,0,0,18">
+                  <StackPanel>
+                    <TextBlock Style="{StaticResource Eyebrow}" Text="QUICK SETUP"/>
+                    <TextBlock Style="{StaticResource CardTitle}" Text="The essentials" Margin="0,2,0,0"/>
+                  </StackPanel>
+                  <TextBlock Style="{StaticResource FieldHint}" Margin="0" HorizontalAlignment="Right" VerticalAlignment="Center" Text="Only the choices most players need."/>
+                </Grid>
+                <UniformGrid Columns="2">
+                  <StackPanel Margin="0,0,14,12">
+                    <TextBlock Style="{StaticResource FieldLabel}" Text="Performance"/>
+                    <ComboBox x:Name="PerformancePreset" Margin="0,8,0,0" AutomationProperties.Name="Performance preset"/>
+                    <TextBlock Style="{StaticResource FieldHint}" Margin="0,6,0,0" Text="Controls picture processing."/>
+                  </StackPanel>
+                  <StackPanel Margin="0,0,0,12">
+                    <TextBlock Style="{StaticResource FieldLabel}" Text="Picture quality"/>
+                    <ComboBox x:Name="SimpleQuality" Margin="0,8,0,0" AutomationProperties.Name="Picture quality preset"/>
+                    <TextBlock Style="{StaticResource FieldHint}" Margin="0,6,0,0" Text="Sharper video needs more bandwidth."/>
+                  </StackPanel>
+                  <StackPanel Margin="0,0,14,0">
+                    <TextBlock Style="{StaticResource FieldLabel}" Text="Mouse aim"/>
+                    <CheckBox x:Name="SimpleMouseAim" Content="Use the mouse to aim" Margin="0,9,0,0" AutomationProperties.Name="Use the mouse to aim"/>
+                    <Grid Margin="0,10,0,0">
+                      <Grid.ColumnDefinitions><ColumnDefinition Width="74"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                      <TextBlock Text="Sensitivity" Foreground="{StaticResource Muted}" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                      <TextBox x:Name="SimpleAimSensitivity" Grid.Column="1" AutomationProperties.Name="Simple aim sensitivity"/>
+                      <Slider x:Name="SimpleAimSensitivitySlider" Grid.Column="2" Margin="10,0,0,0" VerticalAlignment="Center" Minimum="0.1" Maximum="10" TickFrequency="0.1" IsSnapToTickEnabled="True" Value="{Binding Text, ElementName=SimpleAimSensitivity, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsEnabled, ElementName=SimpleAimSensitivity}" AutomationProperties.Name="Simple sensitivity slider"/>
+                    </Grid>
+                  </StackPanel>
+                  <StackPanel>
+                    <TextBlock Style="{StaticResource FieldLabel}" Text="Audio volume"/>
+                    <Grid Margin="0,8,0,0">
+                      <Grid.ColumnDefinitions><ColumnDefinition Width="76"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                      <Grid>
+                        <TextBox x:Name="SimpleVolume" Padding="11,0,28,0" AutomationProperties.Name="Simple audio volume percent"/>
+                        <TextBlock Style="{StaticResource Unit}" Text="%" HorizontalAlignment="Right" Margin="0,0,11,0"/>
+                      </Grid>
+                      <Slider x:Name="SimpleVolumeSlider" Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center" Minimum="0" Maximum="100" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding Text, ElementName=SimpleVolume, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsEnabled, ElementName=SimpleVolume}" AutomationProperties.Name="Simple volume slider"/>
+                    </Grid>
+                    <TextBlock Style="{StaticResource FieldHint}" Margin="0,6,0,0" Text="0 is muted. 100 is full volume."/>
+                  </StackPanel>
+                </UniformGrid>
+                <Border BorderBrush="{StaticResource Signal}" BorderThickness="2,0,0,0" Padding="14,2,0,2" Margin="0,10,0,0">
+                  <TextBlock Style="{StaticResource Margin}" Text="Low latency writes 60 fps, fast scaling, direct frame mapping, H.265 and the standard bitrate for the resolution. Balanced writes automatic bitrate and standard high-quality scaling. Nothing is used until you save it."/>
+                </Border>
+              </StackPanel>
+            </Border>
+
+            <!-- Advanced mode: read-only summary of the saved detailed profile -->
+            <Border x:Name="AdvancedSummary" Style="{StaticResource Card}" Margin="0,16,0,0" Visibility="Collapsed">
+              <StackPanel>
+                <TextBlock Style="{StaticResource Eyebrow}" Text="SAVED FOR THE NEXT SESSION"/>
+                <TextBlock Style="{StaticResource CardTitle}" Text="Current stream profile" Margin="0,2,0,4"/>
+                <TextBlock Style="{StaticResource FieldHint}" Margin="0,0,0,14" Text="Read-only summary. Edit these values in the advanced tabs."/>
+                <UniformGrid Columns="3">
+                  <Border Background="{StaticResource Field}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="3" Padding="12,9" Margin="0,0,10,10">
+                    <StackPanel>
+                      <TextBlock Text="RESOLUTION" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Muted}"/>
+                      <TextBlock x:Name="SumResolution" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource Paper}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                    </StackPanel>
+                  </Border>
+                  <Border Background="{StaticResource Field}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="3" Padding="12,9" Margin="0,0,10,10">
+                    <StackPanel>
+                      <TextBlock Text="FRAME RATE" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Muted}"/>
+                      <TextBlock x:Name="SumRate" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource Paper}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                    </StackPanel>
+                  </Border>
+                  <Border Background="{StaticResource Field}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="3" Padding="12,9" Margin="0,0,10,10">
+                    <StackPanel>
+                      <TextBlock Text="BITRATE" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Muted}"/>
+                      <TextBlock x:Name="SumBitrate" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource Paper}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                    </StackPanel>
+                  </Border>
+                  <Border Background="{StaticResource Field}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="3" Padding="12,9" Margin="0,0,10,10">
+                    <StackPanel>
+                      <TextBlock Text="DECODER" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Muted}"/>
+                      <TextBlock x:Name="SumDecoder" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource Paper}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                    </StackPanel>
+                  </Border>
+                  <Border Background="{StaticResource Field}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="3" Padding="12,9" Margin="0,0,10,10">
+                    <StackPanel>
+                      <TextBlock Text="SCALING" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Muted}"/>
+                      <TextBlock x:Name="SumScaling" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource Paper}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                    </StackPanel>
+                  </Border>
+                  <Border Background="{StaticResource Field}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="3" Padding="12,9" Margin="0,0,10,10">
+                    <StackPanel>
+                      <TextBlock Text="AUDIO BUFFER" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Muted}"/>
+                      <TextBlock x:Name="SumBuffer" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource Paper}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                    </StackPanel>
+                  </Border>
+                </UniformGrid>
+              </StackPanel>
+            </Border>
+
+            <!-- Network check: useful in both simple and advanced modes -->
+            <Border Style="{StaticResource Card}" Margin="0,16,0,0">
+              <StackPanel>
+                <Grid Margin="0,0,0,8">
+                  <StackPanel>
+                    <TextBlock Style="{StaticResource Eyebrow}" Text="NETWORK CHECK"/>
+                    <TextBlock Style="{StaticResource CardTitle}" Text="How steady is the first hop?" Margin="0,2,0,0"/>
+                  </StackPanel>
+                  <Button x:Name="CheckLink" Style="{StaticResource SignalOutline}" Content="Check my network" HorizontalAlignment="Right" VerticalAlignment="Center" MinWidth="150"/>
+                </Grid>
+                <TextBlock Style="{StaticResource FieldHint}" Margin="0,0,0,14" Text="Tests the hop between this PC and your router for 10 seconds. The PS5 is not contacted. Adapter speed is the negotiated link rate, not an internet speed test. If a bitrate is suggested, using it only updates the draft; choose Save settings to keep it."/>
+                <Grid>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" MinWidth="260"/>
+                    <ColumnDefinition Width="242"/>
+                  </Grid.ColumnDefinitions>
+                  <Border Grid.Column="0" Background="{StaticResource Field}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="3" Height="150" ClipToBounds="True">
+                    <Canvas x:Name="LinkTrace"/>
+                  </Border>
+                  <UniformGrid Grid.Column="1" Columns="2" Rows="3" Margin="16,0,0,0">
+                    <StackPanel Margin="0,0,12,10">
+                      <TextBlock Text="CONNECTION" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Muted}"/>
+                      <TextBlock x:Name="LinkKind" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource Paper}" Margin="0,3,0,0" TextWrapping="Wrap" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                    </StackPanel>
+                    <StackPanel Margin="0,0,0,10">
+                      <TextBlock Text="WI-FI SIGNAL" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Muted}"/>
+                      <TextBlock x:Name="LinkSignal" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource Paper}" Margin="0,3,0,0" TextWrapping="Wrap" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                    </StackPanel>
+                    <StackPanel Margin="0,0,12,10">
+                      <TextBlock Text="ADAPTER SPEED" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Muted}"/>
+                      <TextBlock x:Name="LinkReceive" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource Paper}" Margin="0,3,0,0" TextWrapping="Wrap" ToolTip="The negotiated receive rate of the network adapter."/>
+                    </StackPanel>
+                    <StackPanel Margin="0,0,0,10">
+                      <TextBlock Text="TYPICAL DELAY" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Muted}"/>
+                      <TextBlock x:Name="LinkMedian" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource Paper}" Margin="0,3,0,0" TextWrapping="Wrap" ToolTip="Half of the router replies were faster than this and half were slower."/>
+                    </StackPanel>
+                    <StackPanel Margin="0,0,12,10">
+                      <TextBlock Text="HIGH DELAY" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Muted}"/>
+                      <TextBlock x:Name="LinkP95" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource Paper}" Margin="0,3,0,0" TextWrapping="Wrap" ToolTip="95 percent of router replies were at or below this delay."/>
+                    </StackPanel>
+                    <StackPanel Margin="0,0,0,10">
+                      <TextBlock Text="SPIKES + LOSS" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Muted}"/>
+                      <TextBlock x:Name="LinkSpikes" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource Paper}" Margin="0,3,0,0" TextWrapping="Wrap" ToolTip="How many delay spikes were seen and how many replies were missing."/>
+                    </StackPanel>
+                  </UniformGrid>
+                </Grid>
+                <WrapPanel Margin="0,12,0,0">
+                  <Button x:Name="UseLinkBitrate" Style="{StaticResource SignalOutline}" Content="Use suggested bitrate" Visibility="Collapsed" MinWidth="150"/>
+                </WrapPanel>
+                <TextBlock x:Name="LinkNotes" Style="{StaticResource FieldHint}" Margin="0,10,0,0"/>
+              </StackPanel>
+            </Border>
           </StackPanel>
-          <StackPanel Grid.Row="1">
-            <TextBlock Style="{StaticResource Eyebrow}" Text="SESSION"/>
-            <TextBlock x:Name="SessionTitle" Style="{StaticResource PageTitle}" Text="Pair your PS5" Margin="0,2,0,6" TextWrapping="Wrap"/>
-            <TextBlock x:Name="SessionDetail" Style="{StaticResource Margin}" Text="Keep the console awake on the same network as this PC." Margin="0,0,0,16"/>
-            <ComboBox x:Name="ConsoleList" Visibility="Collapsed" Margin="0,0,0,14" MaxWidth="420" HorizontalAlignment="Left" Width="420" AutomationProperties.Name="Console"/>
-            <WrapPanel>
-              <Button x:Name="Primary" Style="{StaticResource Accent}" Content="Pair PS5" Margin="0,0,10,8" MinWidth="150"/>
-              <Button x:Name="Manage" Content="Manage" Visibility="Collapsed" Margin="0,0,10,8"/>
-              <Button x:Name="NativeSettings" Content="Controller and native settings" Margin="0,0,10,8"/>
-            </WrapPanel>
-            <StackPanel Margin="0,20,0,0">
-              <TextBlock Text="SAVED PROFILE" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Muted}"/>
-              <UniformGrid Columns="3" Margin="0,10,0,0">
-                <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="3" Padding="12,9" Margin="0,0,10,10">
-                  <StackPanel>
-                    <TextBlock Text="RESOLUTION" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Muted}"/>
-                    <TextBlock x:Name="SumResolution" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource Paper}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
-                  </StackPanel>
-                </Border>
-                <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="3" Padding="12,9" Margin="0,0,10,10">
-                  <StackPanel>
-                    <TextBlock Text="FRAME RATE" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Muted}"/>
-                    <TextBlock x:Name="SumRate" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource Paper}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
-                  </StackPanel>
-                </Border>
-                <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="3" Padding="12,9" Margin="0,0,10,10">
-                  <StackPanel>
-                    <TextBlock Text="BITRATE" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Muted}"/>
-                    <TextBlock x:Name="SumBitrate" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource Paper}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
-                  </StackPanel>
-                </Border>
-                <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="3" Padding="12,9" Margin="0,0,10,10">
-                  <StackPanel>
-                    <TextBlock Text="DECODER" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Muted}"/>
-                    <TextBlock x:Name="SumDecoder" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource Paper}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
-                  </StackPanel>
-                </Border>
-                <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="3" Padding="12,9" Margin="0,0,10,10">
-                  <StackPanel>
-                    <TextBlock Text="SCALING" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Muted}"/>
-                    <TextBlock x:Name="SumScaling" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource Paper}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
-                  </StackPanel>
-                </Border>
-                <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="3" Padding="12,9" Margin="0,0,10,10">
-                  <StackPanel>
-                    <TextBlock Text="AUDIO BUFFER" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Muted}"/>
-                    <TextBlock x:Name="SumBuffer" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource Paper}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
-                  </StackPanel>
-                </Border>
-              </UniformGrid>
-            </StackPanel>
-          </StackPanel>
-        </Grid>
         </ScrollViewer>
       </TabItem>
 
       <!-- 02 STREAM -->
-      <TabItem Header="Stream" Tag="02">
+      <TabItem x:Name="StreamTab" Header="Stream" Tag="02">
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
           <StackPanel Margin="40,32,34,20" MaxWidth="680" HorizontalAlignment="Left">
             <Grid Margin="0,0,0,26">
               <StackPanel>
                 <TextBlock Style="{StaticResource Eyebrow}" Text="STREAM"/>
-                <TextBlock Style="{StaticResource PageTitle}" Text="What leaves the console" Margin="0,2,0,0"/>
+                <TextBlock Style="{StaticResource PageTitle}" Text="Picture size and bandwidth" Margin="0,2,0,0"/>
               </StackPanel>
               <Path HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,6,0" Stroke="#FF5B4B" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Data="M0 20H14L20 4L30 36L38 12L44 20H80" Width="80" Height="40" Stretch="None"/>
             </Grid>
-            <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="4" Padding="22,18">
+            <Border Style="{StaticResource Card}">
               <StackPanel>
+                <TextBlock Style="{StaticResource Eyebrow}" Text="STREAM SETTINGS"/>
+                <TextBlock Style="{StaticResource CardTitle}" Text="Console video" Margin="0,2,0,4"/>
+                <TextBlock Style="{StaticResource FieldHint}" Margin="0,0,0,16" Text="These choices decide how much picture data the PS5 sends."/>
                 <Grid Margin="0,0,0,18">
                   <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Resolution"/><TextBlock Style="{StaticResource FieldHint}" Text="Output height in pixels."/></StackPanel>
-                  <ComboBox x:Name="Resolution" Grid.Column="1" Width="260" HorizontalAlignment="Left" VerticalAlignment="Top" AutomationProperties.Name="Resolution"/>
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Resolution"/><TextBlock Style="{StaticResource FieldHint}" Text="Higher resolutions look sharper and need more network bandwidth."/></StackPanel>
+                  <ComboBox x:Name="Resolution" Grid.Column="1" Width="280" HorizontalAlignment="Left" VerticalAlignment="Top" AutomationProperties.Name="Resolution"/>
                 </Grid>
                 <Grid Margin="0,0,0,18">
                   <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Frame rate"/><TextBlock Style="{StaticResource FieldHint}" Text="Frames per second."/></StackPanel>
-                  <ComboBox x:Name="Rate" Grid.Column="1" Width="260" HorizontalAlignment="Left" VerticalAlignment="Top" AutomationProperties.Name="Frame rate"/>
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Frame rate"/><TextBlock Style="{StaticResource FieldHint}" Text="60 fps updates motion more often and uses more bandwidth than 30 fps."/></StackPanel>
+                  <ComboBox x:Name="Rate" Grid.Column="1" Width="280" HorizontalAlignment="Left" VerticalAlignment="Top" AutomationProperties.Name="Frame rate"/>
                 </Grid>
                 <Grid Margin="0,0,0,18">
                   <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Codec"/><TextBlock Style="{StaticResource FieldHint}" Text="Video encoding sent by the PS5."/></StackPanel>
-                  <ComboBox x:Name="Codec" Grid.Column="1" Width="260" HorizontalAlignment="Left" VerticalAlignment="Top" AutomationProperties.Name="Codec"/>
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Codec"/><TextBlock Style="{StaticResource FieldHint}" Text="H.265 usually uses less bandwidth than H.264 at similar quality."/></StackPanel>
+                  <ComboBox x:Name="Codec" Grid.Column="1" Width="280" HorizontalAlignment="Left" VerticalAlignment="Top" AutomationProperties.Name="Codec"/>
                 </Grid>
                 <Grid>
                   <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Bitrate"/><TextBlock Style="{StaticResource FieldHint}" Text="0 uses the resolution's default bitrate."/></StackPanel>
-                  <StackPanel Grid.Column="1" Width="260" HorizontalAlignment="Left" VerticalAlignment="Top">
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Bitrate"/><TextBlock Style="{StaticResource FieldHint}" Text="0 uses the standard bitrate for the selected resolution. Higher values can hold more detail and need more bandwidth."/></StackPanel>
+                  <StackPanel Grid.Column="1" Width="280" HorizontalAlignment="Left" VerticalAlignment="Top">
                     <Grid>
                       <TextBox x:Name="Bitrate" Padding="11,0,56,0" AutomationProperties.Name="Bitrate in kilobits per second"/>
                       <TextBlock Style="{StaticResource Unit}" Text="kbps" HorizontalAlignment="Right" Margin="0,0,13,0"/>
@@ -583,67 +673,71 @@
               </StackPanel>
             </Border>
             <Border BorderBrush="{StaticResource Signal}" BorderThickness="2,0,0,0" Padding="14,2,0,2" Margin="0,16,0,0">
-              <TextBlock Style="{StaticResource Margin}" Text="Wi-Fi tip: if video stutters, lower the bitrate before the resolution. A wired PC or 5 GHz Wi-Fi next to the router keeps delay steadier."/>
+              <TextBlock Style="{StaticResource Margin}" Text="If video stutters, lower the bitrate before the resolution. A wired PC or 5/6 GHz Wi-Fi close to the router usually gives a steadier connection."/>
             </Border>
           </StackPanel>
         </ScrollViewer>
       </TabItem>
 
       <!-- 03 PICTURE -->
-      <TabItem Header="Picture" Tag="03">
+      <TabItem x:Name="PictureTab" Header="Picture" Tag="03">
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
           <StackPanel Margin="40,32,34,20" MaxWidth="680" HorizontalAlignment="Left">
             <Grid Margin="0,0,0,26">
               <StackPanel>
                 <TextBlock Style="{StaticResource Eyebrow}" Text="PICTURE"/>
-                <TextBlock Style="{StaticResource PageTitle}" Text="How it reaches the glass" Margin="0,2,0,0"/>
+                <TextBlock Style="{StaticResource PageTitle}" Text="Decode and display" Margin="0,2,0,0"/>
               </StackPanel>
               <Path HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,6,0" Stroke="#FF5B4B" StrokeThickness="2" StrokeLineJoin="Round" Data="M0 10V0H10M60 0H70V10M70 30V40H60M10 40H0V30M26 20H44" Width="70" Height="40" Stretch="None"/>
             </Grid>
-            <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="4" Padding="22,18">
+            <Border Style="{StaticResource Card}">
               <StackPanel>
+                <TextBlock Style="{StaticResource Eyebrow}" Text="DISPLAY PIPELINE"/>
+                <TextBlock Style="{StaticResource CardTitle}" Text="Decode and draw" Margin="0,2,0,4"/>
+                <TextBlock Style="{StaticResource FieldHint}" Margin="0,0,0,16" Text="These choices control how decoded video reaches the window."/>
                 <Grid Margin="0,0,0,18">
                   <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Decoder"/><TextBlock Style="{StaticResource FieldHint}" Text="Hardware falls back to software if the GPU cannot decode the stream."/></StackPanel>
-                  <ComboBox x:Name="Decoder" Grid.Column="1" Width="270" HorizontalAlignment="Left" VerticalAlignment="Top" AutomationProperties.Name="Decoder"/>
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Decoder"/><TextBlock Style="{StaticResource FieldHint}" Text="Automatic lets the player choose. Software decoding can use more CPU."/></StackPanel>
+                  <ComboBox x:Name="Decoder" Grid.Column="1" Width="280" HorizontalAlignment="Left" VerticalAlignment="Top" AutomationProperties.Name="Decoder"/>
                 </Grid>
                 <Grid Margin="0,0,0,18">
                   <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Renderer"/><TextBlock Style="{StaticResource FieldHint}" Text="Draws decoded frames."/></StackPanel>
-                  <ComboBox x:Name="Renderer" Grid.Column="1" Width="270" HorizontalAlignment="Left" VerticalAlignment="Top" AutomationProperties.Name="Renderer"/>
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Renderer"/><TextBlock Style="{StaticResource FieldHint}" Text="Vulkan is the default renderer. OpenGL cannot display H.265 HDR."/></StackPanel>
+                  <ComboBox x:Name="Renderer" Grid.Column="1" Width="280" HorizontalAlignment="Left" VerticalAlignment="Top" AutomationProperties.Name="Renderer"/>
                 </Grid>
                 <Grid Margin="0,0,0,18">
                   <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Scaling"/><TextBlock Style="{StaticResource FieldHint}" Text="Direct draws frames as decoded. Filters can sharpen but may add blur or delay."/></StackPanel>
-                  <ComboBox x:Name="Scaling" Grid.Column="1" Width="270" HorizontalAlignment="Left" VerticalAlignment="Top" AutomationProperties.Name="Scaling"/>
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Scaling"/><TextBlock Style="{StaticResource FieldHint}" Text="Used when the video size differs from the window. Direct does the least work. High quality is the player's standard scaling. Default is a lighter scaling preset."/></StackPanel>
+                  <ComboBox x:Name="Scaling" Grid.Column="1" Width="280" HorizontalAlignment="Left" VerticalAlignment="Top" AutomationProperties.Name="Scaling"/>
                 </Grid>
                 <Grid Margin="0,0,0,18">
                   <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Frame mixer"/><TextBlock Style="{StaticResource FieldHint}" Text="Direct keeps frames separate. Blends smooth motion and can soften it."/></StackPanel>
-                  <ComboBox x:Name="Mixer" Grid.Column="1" Width="270" HorizontalAlignment="Left" VerticalAlignment="Top" AutomationProperties.Name="Frame mixer"/>
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Frame mixer"/><TextBlock Style="{StaticResource FieldHint}" Text="Direct presents frames as they arrive. Other modes can blend frames for smoother motion and may soften detail."/></StackPanel>
+                  <ComboBox x:Name="Mixer" Grid.Column="1" Width="280" HorizontalAlignment="Left" VerticalAlignment="Top" AutomationProperties.Name="Frame mixer"/>
                 </Grid>
                 <Grid Margin="0,0,0,18">
                   <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Window"/><TextBlock Style="{StaticResource FieldHint}" Text="How the player opens."/></StackPanel>
-                  <ComboBox x:Name="WindowMode" Grid.Column="1" Width="270" HorizontalAlignment="Left" VerticalAlignment="Top" AutomationProperties.Name="Window mode"/>
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Window"/><TextBlock Style="{StaticResource FieldHint}" Text="Choose the window size or fullscreen behavior when the player opens."/></StackPanel>
+                  <ComboBox x:Name="WindowMode" Grid.Column="1" Width="280" HorizontalAlignment="Left" VerticalAlignment="Top" AutomationProperties.Name="Window mode"/>
                 </Grid>
                 <Grid>
                   <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Sync"/><TextBlock Style="{StaticResource FieldHint}" Text="Ties presentation to the display refresh."/></StackPanel>
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Sync"/><TextBlock Style="{StaticResource FieldHint}" Text="Can reduce tearing and may wait for the display refresh before showing a frame."/></StackPanel>
                   <CheckBox x:Name="Vsync" Grid.Column="1" Content="Vertical sync" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,7,0,0"/>
                 </Grid>
               </StackPanel>
             </Border>
-            <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="4" Padding="22,18" Margin="0,16,0,0">
+            <Border Style="{StaticResource Card}" Margin="0,16,0,0">
               <StackPanel>
                 <StackPanel Margin="0,0,0,16">
                   <TextBlock Style="{StaticResource Eyebrow}" Text="COLOR GRADE"/>
-                  <TextBlock Style="{StaticResource FieldHint}" Text="Optional display grade applied by the player on the GPU. Neutral values do nothing." Margin="0,2,0,0"/>
+                  <TextBlock Style="{StaticResource CardTitle}" Text="Optional color adjustment" Margin="0,2,0,4"/>
+                  <TextBlock Style="{StaticResource FieldHint}" Text="Applied by the player on the GPU. Neutral values do nothing." Margin="0"/>
                 </StackPanel>
                 <Grid Margin="0,0,0,18">
                   <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                   <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Saturation"/><TextBlock Style="{StaticResource FieldHint}" Text="100 is unchanged."/></StackPanel>
-                  <StackPanel Grid.Column="1" Width="200" HorizontalAlignment="Left" VerticalAlignment="Top">
+                  <StackPanel Grid.Column="1" Width="220" HorizontalAlignment="Left" VerticalAlignment="Top">
                     <Grid>
                       <TextBox x:Name="ColorSat" Padding="11,0,40,0" AutomationProperties.Name="Color saturation percent"/>
                       <TextBlock Style="{StaticResource Unit}" Text="%" HorizontalAlignment="Right" Margin="0,0,15,0"/>
@@ -654,7 +748,7 @@
                 <Grid Margin="0,0,0,18">
                   <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                   <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Vibrance"/><TextBlock Style="{StaticResource FieldHint}" Text="Lifts muted colors, leaves skin tones alone."/></StackPanel>
-                  <StackPanel Grid.Column="1" Width="200" HorizontalAlignment="Left" VerticalAlignment="Top">
+                  <StackPanel Grid.Column="1" Width="220" HorizontalAlignment="Left" VerticalAlignment="Top">
                     <Grid>
                       <TextBox x:Name="ColorVib" Padding="11,0,40,0" AutomationProperties.Name="Color vibrance"/>
                       <TextBlock Style="{StaticResource Unit}" Text="%" HorizontalAlignment="Right" Margin="0,0,15,0"/>
@@ -665,7 +759,7 @@
                 <Grid Margin="0,0,0,18">
                   <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                   <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Contrast"/><TextBlock Style="{StaticResource FieldHint}" Text="Separates darks and lights around the picture's average."/></StackPanel>
-                  <StackPanel Grid.Column="1" Width="200" HorizontalAlignment="Left" VerticalAlignment="Top">
+                  <StackPanel Grid.Column="1" Width="220" HorizontalAlignment="Left" VerticalAlignment="Top">
                     <Grid>
                       <TextBox x:Name="ColorCon" Padding="11,0,40,0" AutomationProperties.Name="Color contrast percent"/>
                       <TextBlock Style="{StaticResource Unit}" Text="%" HorizontalAlignment="Right" Margin="0,0,15,0"/>
@@ -676,7 +770,7 @@
                 <Grid Margin="0,0,0,18">
                   <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                   <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Brightness"/><TextBlock Style="{StaticResource FieldHint}" Text="Lifts or lowers the whole picture."/></StackPanel>
-                  <StackPanel Grid.Column="1" Width="200" HorizontalAlignment="Left" VerticalAlignment="Top">
+                  <StackPanel Grid.Column="1" Width="220" HorizontalAlignment="Left" VerticalAlignment="Top">
                     <Grid>
                       <TextBox x:Name="ColorBri" Padding="11,0,40,0" AutomationProperties.Name="Color brightness percent"/>
                       <TextBlock Style="{StaticResource Unit}" Text="%" HorizontalAlignment="Right" Margin="0,0,15,0"/>
@@ -687,7 +781,7 @@
                 <Grid Margin="0,0,0,18">
                   <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                   <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Temperature"/><TextBlock Style="{StaticResource FieldHint}" Text="Warm toward orange, cool toward blue."/></StackPanel>
-                  <StackPanel Grid.Column="1" Width="200" HorizontalAlignment="Left" VerticalAlignment="Top">
+                  <StackPanel Grid.Column="1" Width="220" HorizontalAlignment="Left" VerticalAlignment="Top">
                     <Grid>
                       <TextBox x:Name="ColorTemp" Padding="11,0,0,0" AutomationProperties.Name="Color temperature"/>
                     </Grid>
@@ -697,7 +791,7 @@
                 <Grid>
                   <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                   <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Tint"/><TextBlock Style="{StaticResource FieldHint}" Text="Shift toward magenta or green."/></StackPanel>
-                  <StackPanel Grid.Column="1" Width="200" HorizontalAlignment="Left" VerticalAlignment="Top">
+                  <StackPanel Grid.Column="1" Width="220" HorizontalAlignment="Left" VerticalAlignment="Top">
                     <Grid>
                       <TextBox x:Name="ColorTint" Padding="11,0,0,0" AutomationProperties.Name="Color tint"/>
                     </Grid>
@@ -711,22 +805,25 @@
       </TabItem>
 
       <!-- 04 SOUND -->
-      <TabItem Header="Sound" Tag="04">
+      <TabItem x:Name="SoundTab" Header="Sound" Tag="04">
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
           <StackPanel Margin="40,32,34,20" MaxWidth="680" HorizontalAlignment="Left">
             <Grid Margin="0,0,0,26">
               <StackPanel>
                 <TextBlock Style="{StaticResource Eyebrow}" Text="SOUND"/>
-                <TextBlock Style="{StaticResource PageTitle}" Text="What you hear" Margin="0,2,0,0"/>
+                <TextBlock Style="{StaticResource PageTitle}" Text="Volume and audio delay" Margin="0,2,0,0"/>
               </StackPanel>
               <Path HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,6,0" Stroke="#FF5B4B" StrokeThickness="3" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Data="M4 28V12M16 34V6M28 24V16M40 36V4M52 26V14M64 30V10" Width="68" Height="40" Stretch="None"/>
             </Grid>
-            <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="4" Padding="22,18">
+            <Border Style="{StaticResource Card}">
               <StackPanel>
+                <TextBlock Style="{StaticResource Eyebrow}" Text="PLAYBACK"/>
+                <TextBlock Style="{StaticResource CardTitle}" Text="Audio output" Margin="0,2,0,4"/>
+                <TextBlock Style="{StaticResource FieldHint}" Margin="0,0,0,16" Text="Controls the player's own output volume."/>
                 <Grid Margin="0,0,0,18">
                   <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Volume"/><TextBlock Style="{StaticResource FieldHint}" Text="Whole number from 0 to 100."/></StackPanel>
-                  <StackPanel Grid.Column="1" Width="200" HorizontalAlignment="Left" VerticalAlignment="Top">
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Volume"/><TextBlock Style="{StaticResource FieldHint}" Text="0 is muted and 100 is full volume in the player."/></StackPanel>
+                  <StackPanel Grid.Column="1" Width="220" HorizontalAlignment="Left" VerticalAlignment="Top">
                     <Grid>
                       <TextBox x:Name="Volume" Padding="11,0,40,0" AutomationProperties.Name="Volume percent"/>
                       <TextBlock Style="{StaticResource Unit}" Text="%" HorizontalAlignment="Right" Margin="0,0,15,0"/>
@@ -736,8 +833,8 @@
                 </Grid>
                 <Grid>
                   <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Audio buffer"/><TextBlock Style="{StaticResource FieldHint}" Text="0 picks a size automatically."/></StackPanel>
-                  <StackPanel Grid.Column="1" Width="200" HorizontalAlignment="Left" VerticalAlignment="Top">
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Audio buffer"/><TextBlock Style="{StaticResource FieldHint}" Text="0 chooses automatically. Larger values tolerate network variation and increase audio delay."/></StackPanel>
+                  <StackPanel Grid.Column="1" Width="220" HorizontalAlignment="Left" VerticalAlignment="Top">
                     <Grid>
                       <TextBox x:Name="AudioBuffer" Padding="11,0,44,0" AutomationProperties.Name="Audio buffer in milliseconds"/>
                       <TextBlock Style="{StaticResource Unit}" Text="ms" HorizontalAlignment="Right" Margin="0,0,13,0"/>
@@ -748,41 +845,70 @@
               </StackPanel>
             </Border>
             <Border BorderBrush="{StaticResource Signal}" BorderThickness="2,0,0,0" Padding="14,2,0,2" Margin="0,16,0,0">
-              <TextBlock Style="{StaticResource Margin}" Text="A smaller buffer lowers audio delay but can crackle on a busy network. Raise it if you hear dropouts."/>
+              <TextBlock Style="{StaticResource Margin}" Text="A smaller buffer reduces the extra audio delay added here and can crackle when the network or PC is busy. Raise it if you hear dropouts."/>
             </Border>
           </StackPanel>
         </ScrollViewer>
       </TabItem>
 
       <!-- 05 CONTROLS -->
-      <TabItem Header="Controls" Tag="05">
+      <TabItem x:Name="ControlsTab" Header="Controls" Tag="05">
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
-          <StackPanel Margin="40,32,34,20" MaxWidth="680" HorizontalAlignment="Left">
-            <Grid Margin="0,0,0,26">
+          <StackPanel Margin="40,32,34,20" MaxWidth="720" HorizontalAlignment="Left">
+            <Grid Margin="0,0,0,24">
               <StackPanel>
                 <TextBlock Style="{StaticResource Eyebrow}" Text="CONTROLS"/>
-                <TextBlock Style="{StaticResource PageTitle}" Text="How you play" Margin="0,2,0,0"/>
+                <TextBlock Style="{StaticResource PageTitle}" Text="Keyboard and mouse" Margin="0,2,0,0"/>
               </StackPanel>
               <Path HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,6,0" Stroke="#FF5B4B" StrokeThickness="2" StrokeLineJoin="Round" Data="M10 15H30Q34 15 34 19V27Q34 31 30 31H10Q6 31 6 27V19Q6 15 10 15ZM13 20H17M15 18V22M25 22H29M27 20V24" Width="40" Height="40" Stretch="None"/>
             </Grid>
 
-            <!-- Keyboard card -->
-            <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="4" Padding="22,18">
+            <Border BorderBrush="{StaticResource Signal}" BorderThickness="2,0,0,0" Padding="14,2,0,2" Margin="0,0,16,0">
+              <TextBlock Style="{StaticResource Margin}" Text="Keys can act as controller buttons while the player is open. Mouse aim turns mouse movement into right stick movement. These settings are used the next time you connect."/>
+            </Border>
+
+            <!-- Input basics -->
+            <Border Style="{StaticResource Card}" Margin="0,0,0,0">
               <StackPanel>
+                <TextBlock Style="{StaticResource Eyebrow}" Text="INPUT BASICS"/>
+                <TextBlock Style="{StaticResource CardTitle}" Text="The main switches" Margin="0,2,0,4"/>
+                <TextBlock Style="{StaticResource FieldHint}" Margin="0,0,0,16" Text="Start here. Most players only need the mouse aim switch and sensitivity."/>
                 <Grid Margin="0,0,0,18">
-                  <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Keyboard"/><TextBlock Style="{StaticResource FieldHint}" Text="Keys act as controller buttons while connected."/></StackPanel>
-                  <CheckBox x:Name="KeyboardEnabled" Grid.Column="1" Content="Keyboard as controller" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,7,0,0" AutomationProperties.Name="Keyboard as controller"/>
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="190"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Keyboard"/><TextBlock Style="{StaticResource FieldHint}" Text="Keys act as controller buttons while the player is open."/></StackPanel>
+                  <CheckBox x:Name="KeyboardEnabled" Grid.Column="1" Content="Use keyboard as a controller" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,7,0,0" AutomationProperties.Name="Keyboard as controller"/>
                 </Grid>
                 <Grid Margin="0,0,0,18">
-                  <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Walk key"/><TextBlock Style="{StaticResource FieldHint}" Text="Hold with WASD to walk instead of run."/></StackPanel>
-                  <ComboBox x:Name="WalkKey" Grid.Column="1" Width="260" HorizontalAlignment="Left" VerticalAlignment="Top" AutomationProperties.Name="Walk key"/>
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="190"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Mouse aim"/><TextBlock Style="{StaticResource FieldHint}" Text="Moving the mouse steers the right stick."/></StackPanel>
+                  <CheckBox x:Name="MouseAim" Grid.Column="1" Content="Use mouse aim" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,7,0,0" AutomationProperties.Name="Mouse aim"/>
                 </Grid>
                 <Grid>
-                  <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Walk speed"/><TextBlock Style="{StaticResource FieldHint}" Text="How fast the character walks while the walk key is held."/></StackPanel>
-                  <StackPanel Grid.Column="1" Width="260" HorizontalAlignment="Left" VerticalAlignment="Top">
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="190"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Aim sensitivity"/><TextBlock Style="{StaticResource FieldHint}" Text="Higher values turn mouse movement into stick movement faster."/></StackPanel>
+                  <StackPanel Grid.Column="1" Width="320" HorizontalAlignment="Left" VerticalAlignment="Top">
+                    <TextBox x:Name="AimSensitivity" AutomationProperties.Name="Aim sensitivity"/>
+                    <Slider x:Name="AimSensitivitySlider" Margin="0,10,0,0" Minimum="0.1" Maximum="10" TickFrequency="0.1" IsSnapToTickEnabled="True" Value="{Binding Text, ElementName=AimSensitivity, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsEnabled, ElementName=AimSensitivity}" AutomationProperties.Name="Sensitivity slider"/>
+                  </StackPanel>
+                </Grid>
+              </StackPanel>
+            </Border>
+
+            <!-- Walking -->
+            <Border Style="{StaticResource Card}" Margin="0,16,0,0">
+              <StackPanel>
+                <TextBlock Style="{StaticResource Eyebrow}" Text="WALKING"/>
+                <TextBlock Style="{StaticResource CardTitle}" Text="Slow down the left stick" Margin="0,2,0,4"/>
+                <TextBlock Style="{StaticResource FieldHint}" Margin="0,0,0,16" Text="Hold the walk key with WASD when a game needs slower movement."/>
+                <Grid Margin="0,0,0,18">
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="190"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Walk key"/><TextBlock Style="{StaticResource FieldHint}" Text="Hold this key to walk instead of run."/></StackPanel>
+                  <ComboBox x:Name="WalkKey" Grid.Column="1" Width="280" HorizontalAlignment="Left" VerticalAlignment="Top" AutomationProperties.Name="Walk key"/>
+                </Grid>
+                <Grid>
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="190"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Walk speed"/><TextBlock Style="{StaticResource FieldHint}" Text="A lower percentage walks more slowly."/></StackPanel>
+                  <StackPanel Grid.Column="1" Width="280" HorizontalAlignment="Left" VerticalAlignment="Top">
                     <Grid>
                       <TextBox x:Name="WalkScale" Padding="11,0,40,0" AutomationProperties.Name="Walk speed percent"/>
                       <TextBlock Style="{StaticResource Unit}" Text="%" HorizontalAlignment="Right" Margin="0,0,15,0"/>
@@ -793,88 +919,100 @@
               </StackPanel>
             </Border>
 
-            <!-- Mouse aim card -->
-            <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="4" Padding="22,18" Margin="0,16,0,0">
+            <!-- Keyboard layout -->
+            <Border Style="{StaticResource Card}" Margin="0,16,0,0">
               <StackPanel>
-                <Grid Margin="0,0,0,18">
-                  <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Mouse"/><TextBlock Style="{StaticResource FieldHint}" Text="Steer the right stick by moving the mouse."/></StackPanel>
-                  <CheckBox x:Name="MouseAim" Grid.Column="1" Content="Mouse aim" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,7,0,0" AutomationProperties.Name="Mouse aim"/>
-                </Grid>
-                <Grid Margin="0,0,0,18">
-                  <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Sensitivity"/><TextBlock Style="{StaticResource FieldHint}" Text="Higher values reach full stick sooner."/></StackPanel>
-                  <StackPanel Grid.Column="1" Width="260" HorizontalAlignment="Left" VerticalAlignment="Top">
-                    <TextBox x:Name="AimSensitivity" AutomationProperties.Name="Aim sensitivity"/>
-                    <Slider x:Name="AimSensitivitySlider" Margin="0,10,0,0" Minimum="0.1" Maximum="10" TickFrequency="0.1" IsSnapToTickEnabled="True" Value="{Binding Text, ElementName=AimSensitivity, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsEnabled, ElementName=AimSensitivity}" AutomationProperties.Name="Sensitivity slider"/>
+                <Grid Margin="0,0,0,10">
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                  <StackPanel>
+                    <TextBlock Style="{StaticResource Eyebrow}" Text="KEYBOARD LAYOUT"/>
+                    <TextBlock Style="{StaticResource CardTitle}" Text="Button bindings" Margin="0,2,0,4"/>
+                    <TextBlock Style="{StaticResource FieldHint}" Margin="0" Text="Read-only preview of the key each PS5 button uses. Editing opens the advanced app settings window."/>
                   </StackPanel>
+                  <Button x:Name="EditKeyMap" Grid.Column="1" Style="{StaticResource SignalOutline}" Content="Edit key bindings" VerticalAlignment="Top" Margin="16,0,0,0" AutomationProperties.Name="Edit key bindings"/>
                 </Grid>
-                <Grid Margin="0,0,0,18">
-                  <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Vertical ratio"/><TextBlock Style="{StaticResource FieldHint}" Text="Above 1 makes vertical aim faster than horizontal."/></StackPanel>
-                  <StackPanel Grid.Column="1" Width="260" HorizontalAlignment="Left" VerticalAlignment="Top">
-                    <TextBox x:Name="AimYRatio" AutomationProperties.Name="Aim vertical ratio"/>
-                    <Slider x:Name="AimYRatioSlider" Margin="0,10,0,0" Minimum="0.25" Maximum="4" TickFrequency="0.25" IsSnapToTickEnabled="True" Value="{Binding Text, ElementName=AimYRatio, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsEnabled, ElementName=AimYRatio}" AutomationProperties.Name="Vertical ratio slider"/>
-                  </StackPanel>
-                </Grid>
-                <Grid Margin="0,0,0,18">
-                  <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Deadzone"/><TextBlock Style="{StaticResource FieldHint}" Text="Jumps past the game's stick deadzone so small moves register."/></StackPanel>
-                  <StackPanel Grid.Column="1" Width="260" HorizontalAlignment="Left" VerticalAlignment="Top">
-                    <Grid>
-                      <TextBox x:Name="AimDeadzone" Padding="11,0,40,0" AutomationProperties.Name="Aim deadzone percent"/>
-                      <TextBlock Style="{StaticResource Unit}" Text="%" HorizontalAlignment="Right" Margin="0,0,15,0"/>
-                    </Grid>
-                    <Slider x:Name="AimDeadzoneSlider" Margin="0,10,0,0" Minimum="0" Maximum="50" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding Text, ElementName=AimDeadzone, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsEnabled, ElementName=AimDeadzone}" AutomationProperties.Name="Deadzone slider"/>
-                  </StackPanel>
-                </Grid>
-                <Grid Margin="0,0,0,18">
-                  <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Curve"/><TextBlock Style="{StaticResource FieldHint}" Text="Above 1 makes slow aim finer and keeps flicks fast."/></StackPanel>
-                  <StackPanel Grid.Column="1" Width="260" HorizontalAlignment="Left" VerticalAlignment="Top">
-                    <TextBox x:Name="AimCurve" AutomationProperties.Name="Aim curve"/>
-                    <Slider x:Name="AimCurveSlider" Margin="0,10,0,0" Minimum="0.3" Maximum="3" TickFrequency="0.1" IsSnapToTickEnabled="True" Value="{Binding Text, ElementName=AimCurve, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsEnabled, ElementName=AimCurve}" AutomationProperties.Name="Curve slider"/>
-                  </StackPanel>
-                </Grid>
-                <Grid Margin="0,0,0,18">
-                  <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Smoothing window"/><TextBlock Style="{StaticResource FieldHint}" Text="Mouse counts are averaged over this many milliseconds."/></StackPanel>
-                  <StackPanel Grid.Column="1" Width="260" HorizontalAlignment="Left" VerticalAlignment="Top">
-                    <Grid>
-                      <TextBox x:Name="AimWindow" Padding="11,0,44,0" AutomationProperties.Name="Aim smoothing window milliseconds"/>
-                      <TextBlock Style="{StaticResource Unit}" Text="ms" HorizontalAlignment="Right" Margin="0,0,13,0"/>
-                    </Grid>
-                    <Slider x:Name="AimWindowSlider" Margin="0,10,0,0" Minimum="2" Maximum="32" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding Text, ElementName=AimWindow, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsEnabled, ElementName=AimWindow}" AutomationProperties.Name="Smoothing window slider"/>
-                  </StackPanel>
-                </Grid>
-                <Grid Margin="0,0,0,18">
-                  <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Stop easing"/><TextBlock Style="{StaticResource FieldHint}" Text="After you stop, the stick eases back over this many milliseconds."/></StackPanel>
-                  <StackPanel Grid.Column="1" Width="260" HorizontalAlignment="Left" VerticalAlignment="Top">
-                    <Grid>
-                      <TextBox x:Name="AimTau" Padding="11,0,44,0" AutomationProperties.Name="Aim stop easing milliseconds"/>
-                      <TextBlock Style="{StaticResource Unit}" Text="ms" HorizontalAlignment="Right" Margin="0,0,13,0"/>
-                    </Grid>
-                    <Slider x:Name="AimTauSlider" Margin="0,10,0,0" Minimum="0" Maximum="50" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding Text, ElementName=AimTau, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsEnabled, ElementName=AimTau}" AutomationProperties.Name="Stop easing slider"/>
-                  </StackPanel>
-                </Grid>
-                <Grid>
-                  <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Release key"/><TextBlock Style="{StaticResource FieldHint}" Text="Press this key or Esc to end mouse capture."/></StackPanel>
-                  <ComboBox x:Name="AimRelease" Grid.Column="1" Width="260" HorizontalAlignment="Left" VerticalAlignment="Top" AutomationProperties.Name="Aim release key"/>
-                </Grid>
+                <UniformGrid x:Name="KeyMapGrid" Columns="2"/>
               </StackPanel>
             </Border>
 
-            <!-- Response and aim pad card -->
-            <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="4" Padding="22,18" Margin="0,16,0,0">
+            <!-- Advanced mouse aim tuning, hidden until asked for -->
+            <Border Style="{StaticResource Card}" Margin="0,16,0,0">
               <StackPanel>
-                <Grid Margin="0,0,0,12">
-                  <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Response"/><TextBlock Style="{StaticResource FieldHint}" Text="Stick output for a steady mouse speed, drawn from the draft values."/></StackPanel>
+                <Grid>
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                  <StackPanel>
+                    <TextBlock Style="{StaticResource Eyebrow}" Text="MOUSE AIM"/>
+                    <TextBlock Style="{StaticResource CardTitle}" Text="Advanced tuning" Margin="0,2,0,4"/>
+                    <TextBlock Style="{StaticResource FieldHint}" Margin="0" Text="Most players can leave these values unchanged."/>
+                  </StackPanel>
+                  <Button x:Name="AimAdvancedToggle" Grid.Column="1" Content="Show advanced aim tuning" VerticalAlignment="Top" Margin="16,0,0,0" MinWidth="176"/>
                 </Grid>
-                <Canvas x:Name="ResponseGraph" Height="150" Margin="0,0,0,4"/>
-                <TextBlock FontSize="11" Foreground="{StaticResource Muted}" Text="Output vs mouse speed in counts per ms. The jump at the left edge is the deadzone floor." Margin="0,0,0,14"/>
+                <StackPanel x:Name="AimAdvancedPanel" Visibility="Collapsed" Margin="0,18,0,0">
+                  <Grid Margin="0,0,0,18">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="190"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                    <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Vertical ratio"/><TextBlock Style="{StaticResource FieldHint}" Text="1 keeps vertical and horizontal speed the same. Higher values make vertical aim faster."/></StackPanel>
+                    <StackPanel Grid.Column="1" Width="280" HorizontalAlignment="Left" VerticalAlignment="Top">
+                      <TextBox x:Name="AimYRatio" AutomationProperties.Name="Aim vertical ratio"/>
+                      <Slider x:Name="AimYRatioSlider" Margin="0,10,0,0" Minimum="0.25" Maximum="4" TickFrequency="0.25" IsSnapToTickEnabled="True" Value="{Binding Text, ElementName=AimYRatio, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsEnabled, ElementName=AimYRatio}" AutomationProperties.Name="Vertical ratio slider"/>
+                    </StackPanel>
+                  </Grid>
+                  <Grid Margin="0,0,0,18">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="190"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                    <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Deadzone"/><TextBlock Style="{StaticResource FieldHint}" Text="Adds a small starting stick output so fine movement registers in games with a deadzone."/></StackPanel>
+                    <StackPanel Grid.Column="1" Width="280" HorizontalAlignment="Left" VerticalAlignment="Top">
+                      <Grid>
+                        <TextBox x:Name="AimDeadzone" Padding="11,0,40,0" AutomationProperties.Name="Aim deadzone percent"/>
+                        <TextBlock Style="{StaticResource Unit}" Text="%" HorizontalAlignment="Right" Margin="0,0,15,0"/>
+                      </Grid>
+                      <Slider x:Name="AimDeadzoneSlider" Margin="0,10,0,0" Minimum="0" Maximum="50" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding Text, ElementName=AimDeadzone, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsEnabled, ElementName=AimDeadzone}" AutomationProperties.Name="Deadzone slider"/>
+                    </StackPanel>
+                  </Grid>
+                  <Grid Margin="0,0,0,18">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="190"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                    <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Curve"/><TextBlock Style="{StaticResource FieldHint}" Text="1 is linear. Higher values give finer slow movement while keeping fast movement available."/></StackPanel>
+                    <StackPanel Grid.Column="1" Width="280" HorizontalAlignment="Left" VerticalAlignment="Top">
+                      <TextBox x:Name="AimCurve" AutomationProperties.Name="Aim curve"/>
+                      <Slider x:Name="AimCurveSlider" Margin="0,10,0,0" Minimum="0.3" Maximum="3" TickFrequency="0.1" IsSnapToTickEnabled="True" Value="{Binding Text, ElementName=AimCurve, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsEnabled, ElementName=AimCurve}" AutomationProperties.Name="Curve slider"/>
+                    </StackPanel>
+                  </Grid>
+                  <Grid Margin="0,0,0,18">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="190"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                    <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Smoothing window"/><TextBlock Style="{StaticResource FieldHint}" Text="Averages mouse input over this many milliseconds. Lower values react sooner and can feel less steady."/></StackPanel>
+                    <StackPanel Grid.Column="1" Width="280" HorizontalAlignment="Left" VerticalAlignment="Top">
+                      <Grid>
+                        <TextBox x:Name="AimWindow" Padding="11,0,44,0" AutomationProperties.Name="Aim smoothing window milliseconds"/>
+                        <TextBlock Style="{StaticResource Unit}" Text="ms" HorizontalAlignment="Right" Margin="0,0,13,0"/>
+                      </Grid>
+                      <Slider x:Name="AimWindowSlider" Margin="0,10,0,0" Minimum="2" Maximum="32" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding Text, ElementName=AimWindow, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsEnabled, ElementName=AimWindow}" AutomationProperties.Name="Smoothing window slider"/>
+                    </StackPanel>
+                  </Grid>
+                  <Grid Margin="0,0,0,18">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="190"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                    <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Stop easing"/><TextBlock Style="{StaticResource FieldHint}" Text="Eases stick output back to center when mouse movement stops."/></StackPanel>
+                    <StackPanel Grid.Column="1" Width="280" HorizontalAlignment="Left" VerticalAlignment="Top">
+                      <Grid>
+                        <TextBox x:Name="AimTau" Padding="11,0,44,0" AutomationProperties.Name="Aim stop easing milliseconds"/>
+                        <TextBlock Style="{StaticResource Unit}" Text="ms" HorizontalAlignment="Right" Margin="0,0,13,0"/>
+                      </Grid>
+                      <Slider x:Name="AimTauSlider" Margin="0,10,0,0" Minimum="0" Maximum="50" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding Text, ElementName=AimTau, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsEnabled, ElementName=AimTau}" AutomationProperties.Name="Stop easing slider"/>
+                    </StackPanel>
+                  </Grid>
+                  <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="190"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                    <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Release key"/><TextBlock Style="{StaticResource FieldHint}" Text="Press this key or Esc to end mouse capture."/></StackPanel>
+                    <ComboBox x:Name="AimRelease" Grid.Column="1" Width="280" HorizontalAlignment="Left" VerticalAlignment="Top" AutomationProperties.Name="Aim release key"/>
+                  </Grid>
+                </StackPanel>
+              </StackPanel>
+            </Border>
+
+            <!-- Local aim preview -->
+            <Border Style="{StaticResource Card}" Margin="0,16,0,0">
+              <StackPanel>
+                <TextBlock Style="{StaticResource Eyebrow}" Text="AIM PREVIEW"/>
+                <TextBlock Style="{StaticResource CardTitle}" Text="Try the feel on this PC" Margin="0,2,0,4"/>
+                <TextBlock Style="{StaticResource FieldHint}" Margin="0,0,0,14" Text="The graph shows stick output for mouse speed using the current draft values. The jump at the left edge is the deadzone floor."/>
+                <Canvas x:Name="ResponseGraph" Height="150" Margin="0,0,0,14"/>
                 <Grid>
                   <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                   <Canvas x:Name="AimPad" Width="190" Height="190" Background="Transparent"/>
@@ -888,25 +1026,25 @@
               </StackPanel>
             </Border>
 
-            <!-- Key map card -->
-            <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="4" Padding="22,18" Margin="0,16,0,0">
-              <StackPanel>
-                <Grid Margin="0,0,0,12">
-                  <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                  <StackPanel><TextBlock Style="{StaticResource FieldLabel}" Text="Key map"/><TextBlock Style="{StaticResource FieldHint}" Text="Which key each PS5 button uses. chiaki-ng stores a key sequence per button."/></StackPanel>
-                  <Button x:Name="EditKeyMap" Grid.Column="2" Content="Edit in chiaki-ng" VerticalAlignment="Top" AutomationProperties.Name="Edit key map in chiaki-ng"/>
-                </Grid>
-                <UniformGrid x:Name="KeyMapGrid" Columns="2"/>
-              </StackPanel>
-            </Border>
-
             <Border BorderBrush="{StaticResource Signal}" BorderThickness="2,0,0,0" Padding="14,2,0,2" Margin="0,16,0,0">
-              <TextBlock Style="{StaticResource Margin}" Text="Keyboard and mouse settings apply from the next session. The aim pad is a local preview only; it never sends input to the PS5."/>
+              <TextBlock Style="{StaticResource Margin}" Text="Keyboard, walking and mouse settings are used the next time you connect. The aim pad is a local preview only and never sends input to the PS5."/>
             </Border>
           </StackPanel>
         </ScrollViewer>
       </TabItem>
+
     </TabControl>
+
+    <!-- Presentation mode switch, deliberately outside the tab template so the controller can own it -->
+    <Border HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="224" Height="88" Margin="0,0,0,72" Background="{StaticResource Rail}" BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0" Padding="20,13">
+      <StackPanel>
+        <Grid>
+          <TextBlock Text="VIEW" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="{StaticResource Muted}" VerticalAlignment="Center"/>
+          <TextBlock x:Name="ModeCaption" Text="Essentials only" FontSize="12" Foreground="{StaticResource Paper}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+        </Grid>
+        <Button x:Name="ModeToggle" Style="{StaticResource SignalOutline}" Content="Show advanced" Margin="0,9,0,0" Height="34" MinWidth="0" Width="150" HorizontalAlignment="Left"/>
+      </StackPanel>
+    </Border>
 
     <!-- Shared footer: draft actions and the latest result -->
     <Border VerticalAlignment="Bottom" Height="76" Margin="224,0,0,0" Background="#0F0E0D" BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0">
@@ -916,8 +1054,8 @@
           <TextBlock x:Name="Notice" Foreground="{StaticResource Muted}" FontSize="13" TextWrapping="Wrap" LineHeight="18" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
         </ScrollViewer>
         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-          <Button x:Name="Revert" Content="Revert" Margin="0,0,10,0"/>
-          <Button x:Name="Apply" Style="{StaticResource Accent}" Content="Apply"/>
+          <Button x:Name="Revert" Content="Reset to saved" Margin="0,0,10,0" MinWidth="128"/>
+          <Button x:Name="Apply" Style="{StaticResource Accent}" Content="Save settings" MinWidth="128"/>
         </StackPanel>
       </Grid>
     </Border>

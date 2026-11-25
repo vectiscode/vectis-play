@@ -74,8 +74,9 @@ internal static class StreamSettings
 	};
 	internal static readonly Choice[] ScalingChoices =
 	{
-		new Choice("direct", "Direct (fast)"), new Choice("nearest", "Nearest"), new Choice("bilinear", "Bilinear"),
-		new Choice("bicubic", "Bicubic"), new Choice("gaussian", "Gaussian"), new Choice("catmull_rom", "Catmull-Rom"),
+		new Choice("direct", "Direct, least processing"), new Choice("preset_default", "Default"), new Choice("preset_high_quality", "High quality (stock)"),
+		new Choice("nearest", "Nearest"), new Choice("bilinear", "Bilinear"), new Choice("bicubic", "Bicubic"),
+		new Choice("gaussian", "Gaussian"), new Choice("catmull_rom", "Catmull-Rom"),
 		new Choice("lanczos", "Lanczos"), new Choice("ewa_lanczos", "EWA Lanczos"), new Choice("ewa_lanczossharp", "EWA Lanczos sharp"),
 		new Choice("ewa_lanczos4sharpest", "EWA Lanczos 4 sharpest"), new Choice("fsr", "FSR"),
 		new Choice("fsrcnnx_x2_8_0_4_1", "FSRCNNX 8"), new Choice("fsrcnnx_x2_16_0_4_1", "FSRCNNX 16")
@@ -412,9 +413,13 @@ internal static class StreamSettings
 		else
 			saved["buffer"] = NativeDisplay(bufferText + " B");
 
-		string presetValue = preset ?? "fast";
+		string presetValue = preset ?? "high_quality";
 		if (presetValue == "fast")
 			saved["scaling"] = "direct";
+		else if (presetValue == "default")
+			saved["scaling"] = "preset_default";
+		else if (presetValue == "high_quality")
+			saved["scaling"] = "preset_high_quality";
 		else if (presetValue == "custom")
 		{
 			string upscaler = null;
@@ -508,6 +513,19 @@ internal static class StreamSettings
 		if (value == "0")
 			return "Auto";
 		return value + " " + unit;
+	}
+
+	// Bitrates used by the upstream video profile presets, in kbps.
+	internal static string DefaultBitrateForResolution(string resolution)
+	{
+		switch (resolution)
+		{
+			case "360p": return "1500";
+			case "540p": return "4000";
+			case "720p": return "8000";
+			case "1080p": return "12000";
+			default: return null;
+		}
 	}
 
 	internal static string Validate(Dictionary<string, string> ui, List<string> changed)
@@ -620,7 +638,7 @@ internal static class StreamSettings
 					{
 						int n;
 						if (!int.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out n) || n < 0 || n > 100000)
-							return "Bitrate: enter 0 for upstream auto or a whole number of kbps from 1 to 100000.";
+							return "Bitrate: enter 0 for automatic or a whole number of kbps from 1 to 100000.";
 						break;
 					}
 				case "volume":
@@ -687,6 +705,10 @@ internal static class StreamSettings
 					case "scaling":
 						if (value == "direct")
 							s.SetValue("placebo_preset", "fast");
+						else if (value == "preset_default")
+							s.SetValue("placebo_preset", "default");
+						else if (value == "preset_high_quality")
+							s.SetValue("placebo_preset", "high_quality");
 						else
 						{
 							WritePlaceboUpscaler(value);

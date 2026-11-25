@@ -25,6 +25,7 @@ internal sealed class LinkPanel
 	private readonly List<int?> _samples = new List<int?>(SampleSlots);
 	private bool _checking;
 	private bool _childRunning;
+	private string _currentKbps;
 
 	public string SuggestedKbps { get; private set; }
 
@@ -77,11 +78,13 @@ internal sealed class LinkPanel
 	public void Finish(LinkProbe.Result result)
 	{
 		SetReadouts(result);
-		_notes.Text = result.Notes.Length > 0 ? string.Join(" ", result.Notes) : string.Empty;
+		string notes = result.Notes.Length > 0 ? string.Join(" ", result.Notes) : string.Empty;
 		if (result.SuggestedKbps.HasValue)
 		{
 			SuggestedKbps = result.SuggestedKbps.Value.ToString(CultureInfo.InvariantCulture);
-			_use.Content = "Use " + SuggestedKbps + " kbps";
+			if (notes.Length > 0)
+				notes += " ";
+			notes += "Suggested bitrate: " + SuggestedKbps + " kbps. Using it only updates the draft; choose Save settings to keep it.";
 			_use.Visibility = Visibility.Visible;
 		}
 		else
@@ -89,6 +92,7 @@ internal sealed class LinkPanel
 			SuggestedKbps = null;
 			_use.Visibility = Visibility.Collapsed;
 		}
+		_notes.Text = notes;
 		_checking = false;
 		RefreshCheckButton();
 		Redraw();
@@ -96,7 +100,7 @@ internal sealed class LinkPanel
 
 	public void Fail(string message)
 	{
-		_notes.Text = "Link check failed: " + message;
+		_notes.Text = "Network check failed: " + message;
 		_checking = false;
 		RefreshCheckButton();
 	}
@@ -115,10 +119,26 @@ internal sealed class LinkPanel
 		RefreshCheckButton();
 	}
 
+	public void UpdateUseState(string currentKbps)
+	{
+		_currentKbps = (currentKbps ?? string.Empty).Trim();
+		RefreshUseButton();
+	}
+
 	private void RefreshCheckButton()
 	{
-		_check.Content = _checking ? "Checking..." : "Check link";
+		_check.Content = _checking ? "Checking..." : "Check my network";
 		_check.IsEnabled = !_checking && !_childRunning;
+		RefreshUseButton();
+	}
+
+	private void RefreshUseButton()
+	{
+		if (SuggestedKbps == null)
+			return;
+		bool selected = string.Equals(_currentKbps, SuggestedKbps, StringComparison.Ordinal);
+		_use.Content = selected ? "Bitrate selected" : "Use " + SuggestedKbps + " kbps";
+		_use.IsEnabled = !selected && !_checking && !_childRunning;
 	}
 
 	private void SetReadouts(LinkProbe.Result result)

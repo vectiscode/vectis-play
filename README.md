@@ -1,90 +1,100 @@
 # Vectis Play
 
-A Windows launcher and settings workbench for [chiaki-ng](https://github.com/chiaki-ng/chiaki-ng) PS5 Remote Play. Vectis Play is a small .NET Framework WPF app that starts a bundled chiaki-ng player and exposes the stream, picture and sound settings that matter for a short button-to-picture path. The video stream never passes through the launcher.
+Vectis Play is a lean Windows launcher for PS5 Remote Play. It wraps a patched chiaki-ng runtime with a small WPF front end focused on fast setup, low latency streaming and keyboard/mouse play.
 
-The runtime is chiaki-ng v1.10.1 ([source at commit f30da0aaeb96fc0026cc03683153f682352e7d7c](https://github.com/chiaki-ng/chiaki-ng/tree/f30da0aaeb96fc0026cc03683153f682352e7d7c)) with the patches in `patches/`: `0001` moves settings to `HKCU\Software\Vectis\Vectis`, `0002` adds optional mouse aim (Raw Input to right stick inside the player, paced at up to 250 Hz), `0003` gives WASD last-input-wins, circular diagonals and a walk key, `0004` adds color grading, `0005` allows alternative keys in one binding, `0006` enables low-delay decoding, `0007` removes the extra direct-mode presentation hold and `0008` sharpens mouse response. `.github/workflows/runtime.yml` builds it and the result is published as the [runtime-1.10.1-vectis.3 release](https://github.com/vectiscode/vectis-play/releases/tag/runtime-1.10.1-vectis.3). Not endorsed or certified by Sony Interactive Entertainment. chiaki-ng and Chiaki are by their authors and contributors; see upstream `docs/index.md` for attribution.
+The project is local first. It does not install drivers, does not replace Sony Remote Play and does not share registration data with other applications. Registration data needed by the runtime remains in the user's registry.
 
-## Layout
+## Quick start
 
-- `src/Program.cs`: entry point. Single-instance mutex, embedded XAML load, window host.
-- `src/Controller.cs`: window parts, session state machine, child process lifecycle, draft Apply/Revert and the link check wiring.
-- `src/StreamSettings.cs`: choice lists, field ids, registry read/write, validation and conversions. No UI types.
-- `src/LinkProbe.cs`: default-route detection, WLAN query, gateway sampling, stats and the bitrate estimate. No WPF types.
-- `src/LinkPanel.cs`: Session link card drawing and readout.
-- `Workbench.xaml`: window layout, embedded as `Vectis.Workbench.xaml`. Four tabs: Session, Stream, Picture, Sound.
-- `VectisPlay.manifest`, `assets/VectisPlay.ico`: manifest and icon. The mark follows the vectiscode site favicon under MIT, see `LICENSES/Vectis-brand-MIT.txt`.
-- `build.py`: downloads and verifies the runtime release, checks `patches/` against `upstream/`, compiles the launcher.
-- `runtime/`: build output, gitignored. `chiaki-ng-Win/chiaki.exe` is SHA-256 checked before every launch and every settings write.
-- `patches/`: the source changes the runtime is built from, applied in order.
-- `motion_lab.py`: optional offline experiment, see below.
-- `COPYING`, `LICENSES/`: AGPL-3.0 with the OpenSSL exception for chiaki-ng and the launcher, MIT for the brand mark.
-
-## Build
-
-Requires Windows with the inbox .NET Framework 4.x compiler and WPF, Python 3 and git for the patch check. The runtime zip is expected at the repo root; if absent `build.py` downloads the pinned release asset and verifies the zip and `chiaki.exe` SHA-256 before extracting.
-
-```
+```powershell
+cd C:\Users\jojo\Documents\Projects\VectisPlay
 python build.py
+.\VectisPlay.exe
 ```
 
-An existing `runtime/` is never deleted or modified by the build. Remove it by hand to rebuild it.
+`build.py` verifies the pinned runtime, checks that the runtime patches still apply when `upstream/` is present and compiles `VectisPlay.exe` with the .NET Framework compiler already included in Windows. If `runtime/` is already valid it is used directly. If it is absent the pinned runtime archive is downloaded, hash checked and extracted.
 
-## First run
+The first screen is the simple view. It exposes only the choices most people need:
 
-1. On the PS5 open Settings > System > Remote Play and enable Remote Play. Keep the console awake and on the same LAN as this PC.
-2. Launch `VectisPlay.exe`. With no console registered it shows "Pair your PS5".
-3. Click "Pair PS5". In the chiaki-ng window click the detected console, choose manual PIN pairing and enter your PSN account ID if the registration asks for it. Keep the default profile. Close the window or use "Close setup" when registration finishes.
-4. The Session tab then shows the console name with "Connect". With several PS5s registered a list picks the target. "Reconnect" appears after a player session ends. Ctrl+Q disconnects inside the player.
+- connect, disconnect and pairing state
+- performance preset
+- resolution
+- mouse aim and sensitivity
+- volume
+- network check and suggested bitrate
 
-The Session tab also has "Pair / manage" for adding or removing registrations and "Native settings", an explicit button that opens chiaki-ng without auto-connect so its own settings icon can reach controller mapping and every other native option. Neither opens on startup.
+Use **Show advanced** for the full tabs: Session, Stream, Picture, Sound and Controls. Settings are drafts until **Save settings** is pressed. **Reset to saved** reloads the last saved values. Saved settings are used by the next connection, not by a stream that is already running.
 
-## Stream, Picture and Sound settings
+## Controls
 
-Each control edits one native setting. Changing one never changes another except where noted. Values are saved with Apply and used from the next session. Revert reloads what is saved. Unsaved edits block Connect, Pair and Native settings until you Apply or Revert. Closing with unsaved edits asks before discarding. Settings are locked while a child window is open.
+The default layout is meant to feel like a PC game:
 
-| Control | Native setting | Values |
-| --- | --- | --- |
-| Resolution | `resolution_local_ps5` | 360p 540p 720p 1080p |
-| Frame rate | `fps_local_ps5` | 30 or 60 |
-| Bitrate | `bitrate_local_ps5` | 0 for upstream auto or 1 to 100000 kbps, saved as typed |
-| Codec | `codec_local_ps5` | H.264 H.265 H.265 HDR |
-| Decoder | `hw_decoder` | automatic Vulkan Video D3D11VA CUDA software |
-| Renderer | `render_backend` | Vulkan OpenGL |
-| Window mode | `window_type` | selected resolution adjust manually fullscreen zoom stretch |
-| VSync | `vsync` | on or off |
-| Volume | `audio_volume` | 0 to 100 percent, native 0 to 128 |
-| Audio buffer | `audio_buffer_size` | 0 for auto or 10 to 100 ms, native 192 bytes per ms |
-| Upscaling | `placebo_preset` and `placebo_settings/upscaler` | Direct (fast) or one named scaler from nearest to FSRCNNX 16 |
-| Frame mixer | `placebo_frame_mixer` and `direct_frame_mapping` | Direct, queue without blend, oversample, hermite, linear, cubic |
+| Input | PlayStation control |
+| --- | --- |
+| Esc or C | Circle/back |
+| Enter | Options/pause |
+| Space | Cross |
+| R and F | Square and Triangle |
+| Q and E | L1 and R1 |
+| Shift | L3/sprint |
+| V | R3 |
+| WASD | left stick |
+| Arrow keys | D-pad |
+| Tab | touchpad click |
+| Backspace | Create |
+| Home | PS |
+| Mouse movement | right stick aim |
+| Left mouse button | R2/fire |
+| Right mouse button | L2/aim |
+| Alt | walk modifier |
 
-Apply validates every changed field before writing anything and writes only the fields you changed. A native value the workbench cannot represent is shown as `Native: <value>` and left alone until you pick something else. OpenGL cannot display H.265 HDR, so that pair is refused with a message instead of being rewritten. The first named scaler also initializes the missing upstream placebo defaults in the private group, because chiaki-ng would otherwise reset the scaler on its next start. Frame mixers are native temporal blending of decoded frames. They are not frame generation and they cannot make input arrive earlier.
+Use **Edit key bindings** to open the runtime's native binding editor. Custom user bindings win over launcher defaults.
 
-## Link check
+Mouse sensitivity changes how quickly the virtual stick reaches full deflection. It cannot turn faster than the game's own maximum stick turn speed. If fast mouse movement is capped, raise the in-game look sensitivity as well.
 
-The Session tab has a Link card. "Check link" measures this PC's hop to the router for about 10 seconds: it finds the interface carrying the default route, reads band, signal and receive rate from Windows (the Native Wifi API on Wi-Fi, never netsh), then pings the first IPv4 gateway 500 times and draws every reply on a timeline with median, p95, spikes and loss. It never contacts the console.
+## Latency profile
 
-On Wi-Fi the card also suggests a bitrate: 25 percent of the receive rate rounded down to 500 kbps and clamped to 3000 to 50000 kbps, halved when loss is over 2 percent or p95 minus median is over 20 ms. The "Use" button only fills the Bitrate draft so the changed marker and Apply count show; Apply still decides what is saved. The number is an estimate, not a measurement of what the console or the rest of the path can carry. Ethernet gets no suggestion.
+For Wi-Fi play the current recommended local profile is:
 
-## Image quality and latency
+- 1080p or 720p
+- 60 fps
+- H.265
+- bitrate suggested by the network check, usually far below the maximum
+- fast render preset
+- no frame interpolation
+- direct frame mapping on
+- VSync off
 
-chiaki-ng decodes video with FFmpeg and renders it natively. On Windows the automatic path can use Vulkan Video, CUDA or D3D11VA depending on the driver and renderer. Software decode is a fallback. The active path has not been measured on this PC.
+A very high bitrate can look sharper in still scenes but can fill Wi-Fi queues and make controller input feel late. Lower resolution, lower bitrate and 60 fps usually help responsiveness more than extra sharpness.
 
-Lowering resolution or bitrate sends less data, which can help when Wi-Fi airtime is congested. A wired console and PC avoid the problem. On Wi-Fi stay close to the access point on 5 or 6 GHz. That is a rationale and not a measurement: no Wi-Fi latency was measured here.
+Remote Play still includes console capture, encoding, Wi-Fi, decoding and display delay. It cannot feel identical to a directly connected monitor.
 
-Game DLSS does not apply: a decoded stream carries no engine motion vectors or depth buffer. Image-only GPU upscaling can improve display scaling. Optical-flow interpolation adds buffering and artifacts and does not make input earlier. For reference, Veyra is a separate project with GPU frame generation providers that use motion guidance: see its [professional page](https://github.com/Likely7/Veyra-NRVideo/blob/fe8df5328a62849eb2d79053564b9574ab68aecd/qml/Veyra/ProPage.qml) and [`FrameGeneration.cpp`](https://github.com/Likely7/Veyra-NRVideo/blob/fe8df5328a62849eb2d79053564b9574ab68aecd/src/ui/bridge/FrameGeneration.cpp) at commit fe8df5328a62849eb2d79053564b9574ab68aecd. Nothing from it is copied or redistributed here and Vectis Play has no live frame generation.
+## Diagnostic tool
 
-## motion_lab.py
+`tools/Start-DebugStream.ps1` starts the runtime with verbose latency logging and writes logs under `%TEMP%\VectisPlayLogs`. It starts a real auto-connect stream, so use it only when the PS5 is free for a test session. Close the player window when done.
 
-An optional offline experiment, separate from the app. `python motion_lab.py INPUT OUTPUT.mp4` runs FFmpeg `minterpolate` (CPU motion estimation from pixels, bidirectional, overlapped block compensation) to turn a local 30 fps recording into 60 fps. It needs `ffmpeg` on PATH, refuses to overwrite an existing output and never touches a live session. It is not GPU optical flow and not DLSS.
+Other recovery and maintenance scripts live in `tools/`. They are not part of normal play.
 
-## State and data
+## Project layout
 
-All launcher data lives in `HKCU\Software\Vectis`. The stock Chiaki keys and any earlier launcher keys are never read or written. The launcher reads only `registered_hosts` metadata (`target`, `server_nickname`, `server_mac`) and the settings listed above. Connect copies the raw `server_mac` value into `settings/auto_connect_mac` and Pair, Manage and Native settings clear it. First-use defaults are written on a user action and only where absent: `placebo_preset=fast`, `placebo_frame_mixer=none`, `disconnect_action=nothing`, `remote_play_ask=false`, `add_steam_shortcut_ask=false`.
+- `src/`: launcher C# source
+- `Workbench.xaml`: launcher interface
+- `build.py`: local verifier and compiler
+- `patches/`: ordered Vectis patches for chiaki-ng
+- `assets/`: icon and brand assets
+- `tools/`: diagnostics and maintenance tools
+- `runtime/`: ignored local runtime payload created by `build.py`
+- `upstream/`: ignored optional chiaki-ng checkout used to validate patches
+- `tools/motion_lab.py`: optional offline frame interpolation experiment, separate from streaming
 
-## Status
+Do not hand edit files inside `runtime/` or `upstream/`; both are generated or external dependencies. Patch changes belong in `patches/`.
 
-The launcher builds with `python build.py` against .NET Framework 4 WPF and the runtime zip plus `chiaki.exe` are SHA-256 pinned. Runtime `runtime-1.10.1-vectis.3` was built successfully by CI, hash-verified, staged locally and smoke-launched without connecting to the console. The rebuilt launcher was also smoke-launched. A previous runtime already connected to the local console successfully. The new low-latency runtime has not had a live console A/B test here, so no measured latency improvement is claimed. Real feel, video pacing, audio, key alternatives and mouse aim still need a user-selected live slot.
+## Runtime patches
 
-## License
+The runtime is chiaki-ng commit `f30da0a` plus ordered patches `0001` through `0008`. They add the Vectis registry namespace, keyboard stick input, mouse aim, color controls, multi-key alternatives, low-delay decode/presentation behavior and input response tuning. `build.py` validates the patch series when the pinned upstream checkout is present.
 
-Launcher code is provided under the same terms as chiaki-ng: GNU AGPL v3 with the OpenSSL exception (`COPYING`, `LICENSES/AGPL-3.0-only-OpenSSL.txt`). The brand mark is MIT (`LICENSES/Vectis-brand-MIT.txt`).
+## License and attribution
+
+Vectis Play preserves chiaki-ng attribution and license notices. chiaki-ng is distributed under AGPL-3.0-only with the OpenSSL exception; see `COPYING` and `LICENSES/AGPL-3.0-only-OpenSSL.txt`. Upstream project: https://github.com/streetpea/chiaki-ng
+
+The Vectis brand icon is under `LICENSES/Vectis-brand-MIT.txt`.

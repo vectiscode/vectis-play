@@ -1,12 +1,10 @@
 # build outputs and local dependencies
-/backend/
 /runtime/
-/PadLAN.exe
 /VectisPlay.exe
 /*.zip
 /*.zip.part
-/.padlan-stage-*/
 /.vectis-stage-*/
+/.vectis-index-*/
 /.scratch/
 __pycache__/
 /upstream/

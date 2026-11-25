@@ -388,20 +388,20 @@ internal static class LinkProbe
 	{
 		if (kind == "Ethernet")
 		{
-			result.Notes = new[] { "Wired. This hop is unlikely to limit bitrate." };
+			result.Notes = new[] { "This PC is wired. The router hop is unlikely to limit the stream bitrate." };
 			return;
 		}
 		if (kind != "Wi-Fi")
 			return;
 		List<string> notes = new List<string>();
 		if (wifi != null && wifi.Band == "2.4 GHz")
-			notes.Add("2.4 GHz is crowded and slower. Use 5 or 6 GHz if you can.");
+			notes.Add("This is 2.4 GHz Wi-Fi, which is often crowded. Use 5 or 6 GHz if available.");
 		if (result.Spikes > 5)
-			notes.Add("Latency spikes on this hop. Background Wi-Fi scans and other devices cause these.");
+			notes.Add("Delay jumped during the test. Other Wi-Fi devices or interference can cause this.");
 		if (result.LossPercent > 2.0)
-			notes.Add("Some router replies were lost. Some routers limit ping, so treat this as a hint.");
+			notes.Add("Some router replies did not come back. Some routers limit ping, so treat this as a hint.");
 		if (wifi != null && wifi.SignalQuality >= 0 && wifi.SignalQuality < 50)
-			notes.Add("Weak signal. Move closer to the access point.");
+			notes.Add("The Wi-Fi signal is weak. Move closer to the router or use a cable.");
 		if (notes.Count > 2)
 			notes.RemoveRange(2, notes.Count - 2);
 		result.Notes = notes.ToArray();
