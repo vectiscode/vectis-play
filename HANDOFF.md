@@ -29,6 +29,8 @@ The Cinema preset uses `preset_high_quality_advanced_spatial` scaling. Balanced 
 
 Patch `0009-receive-buffer.patch` is written and validated but NOT in the shipped runtime. It raises the Takion UDP socket receive buffer from 100 KB to 4 MB in both the LAN and PSN socket paths while keeping the wire `a_rwnd` unchanged. It requires a vectis.4 CI build (workflow_dispatch in `.github/workflows/runtime.yml`) before it has any effect. Further vectis.4 candidates not yet written: shorter packet reorder stall, controller event coalescing, mouse stop decay rework.
 
+Patch `0010-shader-override.patch` is written and validated but likewise NOT active yet. It makes chiaki prefer same-named shader files in a `shaders/` folder next to chiaki.exe over its embedded resources, falling back to embedded on parse failure. `build.py` copies `assets/shaders/ArtCNN_C4F32_DS.glsl` (MIT, Joao Chrisostomo and Kacper Michajlow) to `runtime/chiaki-ng-Win/shaders/FSRCNNX_x2_16-0-4-1.glsl`, so after vectis.4 the advanced spatial slot uses ArtCNN instead of embedded FSRCNNX. ArtCNN C4F32 DS is a CNN luma doubler trained to denoise and sharpen compressed content. The file is inert in the current runtime. libplacebo in the runtime is v7.365.0 and supports mpv-format compute user shaders.
+
 The old quality problem was largely self-inflicted: low bitrate plus the fast placebo preset disabled debanding, dithering, high-quality chroma scaling and color processing. Do not map launcher's quality modes back to `fast`.
 
 The simple launcher presets are Low latency, Balanced and Cinema. Balanced is 32000 kbps and Cinema is 45000 kbps with neural spatial upscaling. Low latency still uses high-quality scaling, not `fast`.

@@ -1,0 +1,41 @@
+diff --git a/gui/src/qmlmainwindow.cpp b/gui/src/qmlmainwindow.cpp
+index 93e0afa..3b01770 100644
+--- a/gui/src/qmlmainwindow.cpp
++++ b/gui/src/qmlmainwindow.cpp
+@@ -2422,7 +2422,7 @@ static const char *render_params_path()
+     return qPrintable(path);
+ }
+ 
+-static const struct pl_hook *load_mpv_hook(pl_gpu gpu, const QString &path)
++static const struct pl_hook *parse_mpv_hook(pl_gpu gpu, const QString &path)
+ {
+     QFile file(path);
+     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+@@ -2437,6 +2437,27 @@ static const struct pl_hook *load_mpv_hook(pl_gpu gpu, const QString &path)
+     return hook;
+ }
+ 
++static const struct pl_hook *load_mpv_hook(pl_gpu gpu, const QString &path)
++{
++    // Vectis: a file with the same name in a "shaders" folder next to the
++    // executable overrides the embedded resource, so newer upscalers can be
++    // dropped in without rebuilding. Fall back to the embedded shader when
++    // the override is missing or fails to parse.
++    const QString prefix = QStringLiteral(":/shaders/");
++    if (path.startsWith(prefix)) {
++        const QString override_path = QCoreApplication::applicationDirPath()
++            + QLatin1String("/shaders/") + path.mid(prefix.size());
++        if (QFile::exists(override_path)) {
++            if (const struct pl_hook *hook = parse_mpv_hook(gpu, override_path)) {
++                qCDebug(chiakiGui) << "Using shader override" << override_path;
++                return hook;
++            }
++            qCWarning(chiakiGui) << "Shader override failed to parse, using embedded resource" << override_path;
++        }
++    }
++    return parse_mpv_hook(gpu, path);
++}
++
+ static bool uses_fsrcnnx(PlaceboUpscaler upscaler)
+ {
+     return upscaler == PlaceboUpscaler::FSRCNNX8 || upscaler == PlaceboUpscaler::FSRCNNX16;

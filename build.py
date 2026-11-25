@@ -13,6 +13,7 @@ The runtime is chiaki-ng v1.10.1 (f30da0a) with patches/ applied, built by
 
 import hashlib
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -91,6 +92,21 @@ def stage_backend(zip_path=None):
         print("runtime/ staged and verified")
 
 
+def install_shader_overrides():
+    # Copy neural upscale shaders next to chiaki.exe. Runtime patch 0010 makes
+    # chiaki prefer these over its embedded shaders once a vectis.4 runtime is
+    # built; with the current runtime they are simply inert files.
+    shaders = ROOT / "assets" / "shaders"
+    target_dir = ROOT / "runtime" / "chiaki-ng-Win" / "shaders"
+    if not shaders.is_dir() or not target_dir.parent.is_dir():
+        return
+    target_dir.mkdir(exist_ok=True)
+    artcnn = shaders / "ArtCNN_C4F32_DS.glsl"
+    if artcnn.exists():
+        shutil.copy2(artcnn, target_dir / "FSRCNNX_x2_16-0-4-1.glsl")
+        print("shader override staged: ArtCNN C4F32 DS replaces embedded FSRCNNX x2 16")
+
+
 def check_patches():
     upstream = ROOT / "upstream"
     patches = sorted((ROOT / "patches").glob("*.patch"))
@@ -145,6 +161,7 @@ def compile_launcher():
 def main():
     require_licenses()
     stage_backend()
+    install_shader_overrides()
     check_patches()
     compile_launcher()
     print("build complete")
