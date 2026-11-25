@@ -23,7 +23,7 @@ The first screen is the simple view. It exposes only the choices most people nee
 - volume
 - network check and suggested bitrate
 
-Use **Show advanced** for the full tabs: Session, Stream, Picture, Sound and Controls. Settings are drafts until **Save settings** is pressed. **Reset to saved** reloads the last saved values. Saved settings are used by the next connection, not by a stream that is already running.
+Use **All settings** for the full tabs: Session, Stream, Picture, Sound and Controls. Settings are drafts until **Save settings** is pressed. **Reset to saved** reloads the last saved values. Saved settings are used by the next connection, not by a stream that is already running.
 
 ## Controls
 
@@ -52,20 +52,25 @@ Use **Edit key bindings** to open the runtime's native binding editor. Custom us
 
 Mouse sensitivity changes how quickly the virtual stick reaches full deflection. It cannot turn faster than the game's own maximum stick turn speed. If fast mouse movement is capped, raise the in-game look sensitivity as well.
 
-## Latency profile
+## Stream quality profiles
 
-For Wi-Fi play the current recommended local profile is:
+The simple view has three stream presets. All use 60 fps stream mode, H.265, Vulkan decode and render, direct frame mapping and no frame interpolation:
 
-- 1080p or 720p
-- 60 fps
-- H.265
-- bitrate suggested by the network check, usually far below the maximum
-- fast render preset
-- no frame interpolation
-- direct frame mapping on
-- VSync off
+- **Low latency**: quality scaling, VSync off, 20 ms audio buffer, 20000 kbps at 1080p or 15000 kbps at 720p
+- **Balanced**: tuned EWA Lanczos sharp scaling, debanding, dithering, VSync on, 20 ms audio buffer, 32000 kbps
+- **Cinema / Quality**: stronger debanding and anti-ringing, VSync on, 30 ms audio buffer, 45000 kbps and clean keyframe recovery after unrecoverable packet loss
 
-A very high bitrate can look sharper in still scenes but can fill Wi-Fi queues and make controller input feel late. Lower resolution, lower bitrate and 60 fps usually help responsiveness more than extra sharpness.
+The 5% packet-loss reporting ceiling avoids unnecessary resolution and bitrate reduction during small Wi-Fi spikes. On genuinely unstable Wi-Fi this can mean more visible compression artifacts; use the network check and lower the bitrate if needed.
+
+H.265 HDR is available in the advanced Stream page. It sends 10-bit video and can substantially reduce banding on an OLED, but Windows HDR should be enabled first with `Win+Alt+B`.
+
+60 fps streaming does not make a 30 fps game simulate faster. A game capped at 30 fps keeps its own engine and frame cadence latency regardless of the streaming preset.
+
+## Controller play
+
+The launcher can be navigated with an XInput controller: A selects, B goes back, LB/RB change pages and the D-pad or left stick moves focus. Native DualSense launcher navigation is not implemented because DualSense is not an XInput device unless Steam Input or DS4Windows is already translating it.
+
+For streaming with a real DualSense, use USB-C for full HD haptics and adaptive triggers. Configure the controller's Windows playback device as Quadraphonic and do not use it as the default Windows output. Close Steam Input, DS4Windows or DualSenseX while streaming if they mask the controller. Bluetooth play uses adaptive triggers but falls back to motor rumble instead of full HD haptics. The Controls page exposes HD haptic strength, Bluetooth rumble strength and background controller input.
 
 Remote Play still includes console capture, encoding, Wi-Fi, decoding and display delay. It cannot feel identical to a directly connected monitor.
 

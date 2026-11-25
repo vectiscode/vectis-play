@@ -28,8 +28,9 @@ internal sealed class Controller : IDisposable
 
 	private static readonly Choice[] PerformancePresetChoices =
 	{
-		new Choice("balanced", "Balanced (default)"),
-		new Choice("lowlatency", "Low latency")
+		new Choice("lowlatency", "Low latency"),
+		new Choice("balanced", "Balanced"),
+		new Choice("cinema", "Cinema / Quality")
 	};
 	private static readonly Choice[] SimpleQualityChoices =
 	{
@@ -103,6 +104,9 @@ internal sealed class Controller : IDisposable
 	private readonly TextBox _colorBri;
 	private readonly TextBox _colorTemp;
 	private readonly TextBox _colorTint;
+	private readonly TextBox _hapticOverride;
+	private readonly ComboBox _rumbleIntensity;
+	private readonly CheckBox _padBackground;
 	private readonly ComboBox _performancePreset;
 	private readonly ComboBox _simpleQuality;
 	private readonly CheckBox _simpleMouseAim;
@@ -112,6 +116,11 @@ internal sealed class Controller : IDisposable
 	private readonly StackPanel _aimAdvancedPanel;
 	private readonly UniformGrid _keyMapGrid;
 	private readonly AimPad _aimPad;
+	private readonly GamepadNav _nav;
+	private readonly FrameworkElement _linkDetails;
+	private readonly FrameworkElement _draftBadge;
+	private readonly TextBlock _draftCount;
+	private readonly TextBlock _padHint;
 	private readonly List<Control> _settingControls = new List<Control>();
 	private readonly List<Control> _aimControls = new List<Control>();
 	private readonly Dictionary<string, Control> _fieldControls = new Dictionary<string, Control>();
@@ -210,6 +219,9 @@ internal sealed class Controller : IDisposable
 		_colorBri = Part<TextBox>("ColorBri");
 		_colorTemp = Part<TextBox>("ColorTemp");
 		_colorTint = Part<TextBox>("ColorTint");
+		_hapticOverride = Part<TextBox>("HapticOverride");
+		_rumbleIntensity = Part<ComboBox>("RumbleIntensity");
+		_padBackground = Part<CheckBox>("PadBackground");
 		_performancePreset = Part<ComboBox>("PerformancePreset");
 		_simpleQuality = Part<ComboBox>("SimpleQuality");
 		_simpleMouseAim = Part<CheckBox>("SimpleMouseAim");
@@ -221,8 +233,12 @@ internal sealed class Controller : IDisposable
 		_aimPad = new AimPad(_win,
 			Part<Canvas>("ResponseGraph"), Part<Canvas>("AimPad"),
 			Part<TextBlock>("AimSpeed"), Part<TextBlock>("AimStick"));
+		_linkDetails = Part<FrameworkElement>("LinkDetails");
+		_draftBadge = Part<FrameworkElement>("DraftBadge");
+		_draftCount = Part<TextBlock>("DraftCount");
+		_padHint = Part<TextBlock>("PadHint");
 
-		_settingControls.AddRange(new Control[] { _vsync, _resolution, _rate, _codec, _decoder, _renderer, _scaling, _mixer, _windowMode, _bitrate, _volume, _audioBuffer, _keyboardEnabled, _walkKey, _walkScale, _mouseAim, _colorSat, _colorVib, _colorCon, _colorBri, _colorTemp, _colorTint, _performancePreset, _simpleQuality, _simpleMouseAim, _simpleVolume });
+		_settingControls.AddRange(new Control[] { _vsync, _resolution, _rate, _codec, _decoder, _renderer, _scaling, _mixer, _windowMode, _bitrate, _volume, _audioBuffer, _keyboardEnabled, _walkKey, _walkScale, _mouseAim, _colorSat, _colorVib, _colorCon, _colorBri, _colorTemp, _colorTint, _hapticOverride, _rumbleIntensity, _padBackground, _performancePreset, _simpleQuality, _simpleMouseAim, _simpleVolume });
 		_aimControls.AddRange(new Control[] { _aimSensitivity, _aimYRatio, _aimDeadzone, _aimCurve, _aimWindow, _aimTau, _aimRelease, _simpleAimSensitivity });
 		_fieldControls["resolution"] = _resolution;
 		_fieldControls["rate"] = _rate;
@@ -247,6 +263,9 @@ internal sealed class Controller : IDisposable
 		_fieldControls["aimwindow"] = _aimWindow;
 		_fieldControls["aimtau"] = _aimTau;
 		_fieldControls["aimrelease"] = _aimRelease;
+		_fieldControls["haptics"] = _hapticOverride;
+		_fieldControls["rumble"] = _rumbleIntensity;
+		_fieldControls["padbackground"] = _padBackground;
 		_fieldControls["colorsat"] = _colorSat;
 		_fieldControls["colorvib"] = _colorVib;
 		_fieldControls["colorcon"] = _colorCon;
@@ -292,10 +311,10 @@ internal sealed class Controller : IDisposable
 				_title.Text = selected.Name;
 		};
 
-		ComboBox[] combos = { _resolution, _rate, _codec, _decoder, _renderer, _scaling, _mixer, _windowMode, _walkKey, _aimRelease };
+		ComboBox[] combos = { _resolution, _rate, _codec, _decoder, _renderer, _scaling, _mixer, _windowMode, _walkKey, _aimRelease, _rumbleIntensity };
 		foreach (ComboBox combo in combos)
 			combo.SelectionChanged += delegate { OnDraftChanged(); };
-		TextBox[] boxes = { _bitrate, _volume, _audioBuffer, _walkScale, _aimSensitivity, _aimYRatio, _aimDeadzone, _aimCurve, _aimWindow, _aimTau, _colorSat, _colorVib, _colorCon, _colorBri, _colorTemp, _colorTint };
+		TextBox[] boxes = { _bitrate, _volume, _audioBuffer, _walkScale, _aimSensitivity, _aimYRatio, _aimDeadzone, _aimCurve, _aimWindow, _aimTau, _colorSat, _colorVib, _colorCon, _colorBri, _colorTemp, _colorTint, _hapticOverride };
 		foreach (TextBox box in boxes)
 			box.TextChanged += delegate { OnDraftChanged(); };
 		_vsync.Checked += delegate { OnDraftChanged(); };
@@ -304,6 +323,8 @@ internal sealed class Controller : IDisposable
 		_keyboardEnabled.Unchecked += delegate { OnDraftChanged(); };
 		_mouseAim.Checked += delegate { OnDraftChanged(); };
 		_mouseAim.Unchecked += delegate { OnDraftChanged(); };
+		_padBackground.Checked += delegate { OnDraftChanged(); };
+		_padBackground.Unchecked += delegate { OnDraftChanged(); };
 
 		_performancePreset.SelectionChanged += delegate { OnSimplePresetChanged(); };
 		_simpleQuality.SelectionChanged += delegate { OnSimpleQualityChanged(); };
@@ -312,6 +333,11 @@ internal sealed class Controller : IDisposable
 		_simpleAimSensitivity.TextChanged += delegate { CopySimpleText(_simpleAimSensitivity, _aimSensitivity); };
 		_simpleVolume.TextChanged += delegate { CopySimpleText(_simpleVolume, _volume); };
 
+		_nav = new GamepadNav(_win, _pages,
+			delegate { return _primary; },
+			delegate { return _aimPad.IsCapturing; },
+			delegate(bool connected) { _padHint.Visibility = connected ? Visibility.Visible : Visibility.Collapsed; });
+
 		_watch.Interval = TimeSpan.FromMilliseconds(400);
 		_watch.Tick += delegate
 		{
@@ -319,17 +345,19 @@ internal sealed class Controller : IDisposable
 				RefreshState();
 		};
 
-		_notice.Text = "Settings are drafts until you choose Save settings. Saved settings are used on the next connection.";
+		_notice.Text = "Changes stay a draft until you save. Saved settings are used the next time you connect.";
 		_win.Loaded += delegate
 		{
 			_loading = false;
 			RefreshState();
+			_primary.Focus();
 		};
 	}
 
 	public void Dispose()
 	{
 		_watch.Stop();
+		_nav.Dispose();
 		if (_linkCheck != null)
 			_linkCheck.Cancel();
 		if (_child != null)
@@ -407,8 +435,8 @@ internal sealed class Controller : IDisposable
 		}
 		_quickSetupCard.Visibility = _advancedMode ? Visibility.Collapsed : Visibility.Visible;
 		_advancedSummary.Visibility = _advancedMode ? Visibility.Visible : Visibility.Collapsed;
-		_modeToggle.Content = _advancedMode ? "Use simple view" : "Show advanced";
-		_modeCaption.Text = _advancedMode ? "Detailed settings visible" : "Essentials only";
+		_modeToggle.Content = _advancedMode ? "Simple view" : "All settings";
+		_modeCaption.Text = _advancedMode ? "All settings" : "Essentials";
 	}
 
 	private void EnsureTab(int index, TabItem item)
@@ -474,14 +502,19 @@ internal sealed class Controller : IDisposable
 
 	private string DetectPerformancePreset()
 	{
-		if (ComboValue(_rate) != "60" || ComboValue(_codec) != "h265" || ComboValue(_mixer) != "direct")
+		string codec = ComboValue(_codec);
+		if (ComboValue(_rate) != "60" || (codec != "h265" && codec != "h265_hdr") || ComboValue(_mixer) != "direct"
+			|| ComboValue(_decoder) != "vulkan" || ComboValue(_renderer) != "vulkan")
 			return "custom";
 		string scaling = ComboValue(_scaling);
 		string bitrate = _bitrate.Text.Trim();
-		if (scaling == "direct" && bitrate == StreamSettings.DefaultBitrateForResolution(ComboValue(_resolution)))
+		string buffer = _audioBuffer.Text.Trim();
+		if (scaling == "preset_high_quality" && _vsync.IsChecked != true && buffer == "20" && bitrate == StreamSettings.DefaultBitrateForResolution(ComboValue(_resolution)))
 			return "lowlatency";
-		if (scaling == "preset_high_quality" && bitrate == "0")
+		if (scaling == "ewa_lanczossharp" && _vsync.IsChecked == true && buffer == "20" && bitrate == "32000")
 			return "balanced";
+		if (scaling == "ewa_lanczossharp" && _vsync.IsChecked == true && buffer == "30" && bitrate == "45000")
+			return "cinema";
 		return "custom";
 	}
 
@@ -525,20 +558,34 @@ internal sealed class Controller : IDisposable
 		try
 		{
 			SelectComboValue(_rate, "60");
-			SelectComboValue(_codec, "h265");
+			string codec = ComboValue(_codec);
+			if (codec != "h265" && codec != "h265_hdr")
+				SelectComboValue(_codec, "h265");
+			SelectComboValue(_decoder, "vulkan");
+			SelectComboValue(_renderer, "vulkan");
 			SelectComboValue(_mixer, "direct");
 			if (preset == "lowlatency")
 			{
-				SelectComboValue(_scaling, "direct");
+				SelectComboValue(_scaling, "preset_high_quality");
 				_vsync.IsChecked = false;
+				_audioBuffer.Text = "20";
 				string bitrate = StreamSettings.DefaultBitrateForResolution(ComboValue(_resolution));
 				if (bitrate != null)
 					_bitrate.Text = bitrate;
 			}
+			else if (preset == "balanced")
+			{
+				SelectComboValue(_scaling, "ewa_lanczossharp");
+				_vsync.IsChecked = true;
+				_audioBuffer.Text = "20";
+				_bitrate.Text = "32000";
+			}
 			else
 			{
-				SelectComboValue(_scaling, "preset_high_quality");
-				_bitrate.Text = "0";
+				SelectComboValue(_scaling, "ewa_lanczossharp");
+				_vsync.IsChecked = true;
+				_audioBuffer.Text = "30";
+				_bitrate.Text = "45000";
 			}
 		}
 		finally
@@ -607,7 +654,7 @@ internal sealed class Controller : IDisposable
 	{
 		bool show = _aimAdvancedPanel.Visibility != Visibility.Visible;
 		_aimAdvancedPanel.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
-		_aimAdvancedToggle.Content = show ? "Hide advanced aim tuning" : "Show advanced aim tuning";
+		_aimAdvancedToggle.Content = show ? "Hide tuning" : "Show tuning";
 	}
 
 	private bool ChildRunning()
@@ -701,21 +748,21 @@ internal sealed class Controller : IDisposable
 				_title.Text = "Player open";
 				_sessionState.Text = "PLAYER OPEN";
 				_primary.Content = "Disconnect";
-				_detail.Text = "The player window is open. Close it or choose Disconnect here. Ctrl+Q also closes the stream.";
+				_detail.Text = "Close the player or choose Disconnect. Ctrl+Q also ends the stream.";
 			}
 			else if (_childKind == ChildKind.Pair)
 			{
 				_title.Text = "Pairing window open";
 				_sessionState.Text = "SETUP OPEN";
 				_primary.Content = "Close setup";
-				_detail.Text = "Finish pairing in the setup window, then close that window to return here.";
+				_detail.Text = "Finish pairing in the setup window, then close it to come back.";
 			}
 			else
 			{
 				_title.Text = "Controller settings open";
 				_sessionState.Text = "SETUP OPEN";
 				_primary.Content = "Close setup";
-				_detail.Text = "Use the open window for controller mapping and options Vectis Play does not cover, then close it to return here.";
+				_detail.Text = "Change controller mapping and extra options there, then close it to come back.";
 			}
 			if (_runningNotice != null)
 				SetNotice(_runningNotice);
@@ -736,7 +783,7 @@ internal sealed class Controller : IDisposable
 		{
 			_title.Text = "Pair your PS5";
 			_sessionState.Text = "PAIRING NEEDED";
-			_detail.Text = "On the PS5, open Settings > System > Remote Play > Link Device. Choose Pair PS5 here, enter the console number in the setup window, then close that window.";
+			_detail.Text = "On the PS5 open Settings > System > Remote Play > Link Device, then choose Pair PS5 and enter the code.";
 			_primary.Content = "Pair PS5";
 			_manage.Visibility = Visibility.Collapsed;
 			_native.Visibility = Visibility.Visible;
@@ -747,7 +794,7 @@ internal sealed class Controller : IDisposable
 			ConsoleEntry console = SelectedConsole();
 			_title.Text = console != null ? console.Name : "PS5";
 			_sessionState.Text = "READY";
-			_detail.Text = "Ready when you are. Settings you save are used the next time you connect.";
+			_detail.Text = "Console paired. Keep it awake on the same network.";
 			_primary.Content = _everConnected ? "Reconnect" : "Connect";
 			_manage.Visibility = Visibility.Visible;
 			_native.Visibility = Visibility.Visible;
@@ -976,7 +1023,7 @@ internal sealed class Controller : IDisposable
 		using (RegistryKey root = Registry.CurrentUser.CreateSubKey(StreamSettings.RegistryPath, RegistryKeyPermissionCheck.ReadWriteSubTree))
 		using (RegistryKey settings = root.CreateSubKey("settings", RegistryKeyPermissionCheck.ReadWriteSubTree))
 		{
-			StreamSettings.SetIfAbsent(settings, "placebo_preset", "fast");
+			StreamSettings.SetIfAbsent(settings, "placebo_preset", "high_quality");
 			StreamSettings.SetIfAbsent(settings, "placebo_frame_mixer", "none");
 			StreamSettings.SetIfAbsent(settings, "disconnect_action", "nothing");
 			StreamSettings.SetIfAbsent(settings, "remote_play_ask", "false");
@@ -995,26 +1042,51 @@ internal sealed class Controller : IDisposable
 			return;
 		if (_linkCheck != null)
 			_linkCheck.Cancel();
-		_linkCheck = new CancellationTokenSource();
+		CancellationTokenSource check = new CancellationTokenSource();
+		_linkCheck = check;
+		_linkDetails.Visibility = Visibility.Visible;
 		_linkPanel.BeginCheck();
-		RunLinkCheck(_linkCheck.Token);
+		_win.Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(delegate { _linkDetails.BringIntoView(); }));
+		RunLinkCheck(check);
 	}
 
-	private async void RunLinkCheck(CancellationToken token)
+	// A superseded check must not touch the panel: its late Cancelled() would
+	// wipe the samples of the check that replaced it.
+	private async void RunLinkCheck(CancellationTokenSource check)
 	{
 		try
 		{
-			LinkProbe.Result result = await LinkProbe.RunAsync(new Progress<int?>(_linkPanel.AddSample), token);
-			_linkPanel.Finish(result);
+			LinkProbe.Result result = await LinkProbe.RunAsync(new Progress<int?>(delegate(int? sample)
+			{
+				if (!check.IsCancellationRequested)
+					_linkPanel.AddSample(sample);
+			}), check.Token);
+			if (!check.IsCancellationRequested)
+				_linkPanel.Finish(result);
+			else if (OwnsLinkPanel(check))
+				_linkPanel.Cancelled();
 		}
 		catch (OperationCanceledException)
 		{
-			_linkPanel.Cancelled();
+			if (OwnsLinkPanel(check))
+				_linkPanel.Cancelled();
 		}
 		catch (Exception ex)
 		{
-			_linkPanel.Fail(ex.Message);
+			if (OwnsLinkPanel(check))
+				_linkPanel.Fail(ex.Message);
 		}
+		finally
+		{
+			if (ReferenceEquals(_linkCheck, check))
+				_linkCheck = null;
+			check.Dispose();
+		}
+	}
+
+	private bool OwnsLinkPanel(CancellationTokenSource check)
+	{
+		return _linkCheck == null || ReferenceEquals(_linkCheck, check);
 	}
 
 	private void ApplyLinkSuggestion()
@@ -1063,6 +1135,9 @@ internal sealed class Controller : IDisposable
 			_colorBri.Text = saved["colorbri"];
 			_colorTemp.Text = saved["colortemp"];
 			_colorTint.Text = saved["colortint"];
+			_hapticOverride.Text = saved["haptics"];
+			ShowCombo(_rumbleIntensity, StreamSettings.RumbleChoices, saved["rumble"]);
+			_padBackground.IsChecked = saved["padbackground"] == "true";
 			LoadKeyMap();
 			_aimPad.SyncFrom(saved);
 			_sumResolution.Text = StreamSettings.SummaryChoice(StreamSettings.ResolutionChoices, saved["resolution"]);
@@ -1097,31 +1172,40 @@ internal sealed class Controller : IDisposable
 		_keyMapGrid.Children.Clear();
 		foreach (KeyMapEntry row in StreamSettings.ReadKeyMap())
 		{
-			Grid cell = new Grid();
-			cell.Margin = new Thickness(0, 0, 20, 6);
+			Grid cell = new Grid { Margin = new Thickness(0, 0, 16, 8), MinHeight = 34 };
 			cell.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 			cell.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 			TextBlock button = new TextBlock
 			{
 				Text = row.Button,
-				FontSize = 12,
+				FontSize = 13,
 				Foreground = FindBrush("Muted"),
-				VerticalAlignment = VerticalAlignment.Center
-			};
-			TextBlock key = new TextBlock
-			{
-				Text = row.Key,
-				FontFamily = new FontFamily("Consolas"),
-				FontSize = 12,
-				FontWeight = FontWeights.SemiBold,
-				Foreground = FindBrush("Paper"),
-				HorizontalAlignment = HorizontalAlignment.Right,
 				VerticalAlignment = VerticalAlignment.Center,
-				Margin = new Thickness(10, 0, 0, 0)
+				TextTrimming = TextTrimming.CharacterEllipsis
 			};
-			Grid.SetColumn(key, 1);
+			Border cap = new Border
+			{
+				Background = FindBrush("Raised"),
+				BorderBrush = FindBrush("Line2"),
+				BorderThickness = new Thickness(1, 1, 1, 2),
+				CornerRadius = new CornerRadius(5),
+				Padding = new Thickness(10, 3, 10, 3),
+				MinWidth = 34,
+				Margin = new Thickness(10, 0, 0, 0),
+				VerticalAlignment = VerticalAlignment.Center,
+				Child = new TextBlock
+				{
+					Text = row.Key,
+					FontFamily = new FontFamily("Consolas"),
+					FontSize = 13,
+					FontWeight = FontWeights.SemiBold,
+					Foreground = FindBrush("Paper"),
+					HorizontalAlignment = HorizontalAlignment.Center
+				}
+			};
+			Grid.SetColumn(cap, 1);
 			cell.Children.Add(button);
-			cell.Children.Add(key);
+			cell.Children.Add(cap);
 			_keyMapGrid.Children.Add(cell);
 		}
 	}
@@ -1179,6 +1263,9 @@ internal sealed class Controller : IDisposable
 		ui["aimwindow"] = (_aimWindow.Text ?? string.Empty).Trim();
 		ui["aimtau"] = (_aimTau.Text ?? string.Empty).Trim();
 		ui["aimrelease"] = ComboValue(_aimRelease);
+		ui["haptics"] = (_hapticOverride.Text ?? string.Empty).Trim();
+		ui["rumble"] = ComboValue(_rumbleIntensity);
+		ui["padbackground"] = _padBackground.IsChecked == true ? "true" : "false";
 		ui["colorsat"] = (_colorSat.Text ?? string.Empty).Trim();
 		ui["colorvib"] = (_colorVib.Text ?? string.Empty).Trim();
 		ui["colorcon"] = (_colorCon.Text ?? string.Empty).Trim();
@@ -1227,7 +1314,7 @@ internal sealed class Controller : IDisposable
 			control.IsEnabled = !running && !_settingsFailed && aimOn;
 		foreach (KeyValuePair<string, Control> pair in _fieldControls)
 			pair.Value.Tag = changedIds.Contains(pair.Key) ? "changed" : null;
-		bool presetChanged = changedIds.Contains("rate") || changedIds.Contains("codec") || changedIds.Contains("scaling") || changedIds.Contains("mixer") || changedIds.Contains("bitrate");
+		bool presetChanged = changedIds.Contains("rate") || changedIds.Contains("codec") || changedIds.Contains("decoder") || changedIds.Contains("renderer") || changedIds.Contains("scaling") || changedIds.Contains("mixer") || changedIds.Contains("bitrate") || changedIds.Contains("vsync") || changedIds.Contains("buffer");
 		_performancePreset.Tag = presetChanged ? "changed" : null;
 		_simpleQuality.Tag = changedIds.Contains("resolution") ? "changed" : null;
 		_simpleMouseAim.Tag = changedIds.Contains("mouseaim") ? "changed" : null;
@@ -1237,6 +1324,8 @@ internal sealed class Controller : IDisposable
 		_revert.IsEnabled = !running && (count > 0 || _settingsFailed);
 		_apply.Content = "Save settings";
 		_revert.Content = "Reset to saved";
+		_draftBadge.Visibility = count > 0 ? Visibility.Visible : Visibility.Collapsed;
+		_draftCount.Text = count == 1 ? "1 unsaved change" : count.ToString(CultureInfo.InvariantCulture) + " unsaved changes";
 		_linkPanel.SetChildRunning(running);
 		_linkPanel.UpdateUseState(_bitrate.Text);
 		SyncSimpleFromCanonical();

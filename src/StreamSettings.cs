@@ -46,7 +46,7 @@ internal static class StreamSettings
 	{
 		"resolution", "rate", "bitrate", "codec", "decoder", "renderer", "window", "vsync", "volume", "buffer", "scaling", "mixer",
 		"keyboard", "walkkey", "walkscale", "mouseaim", "aimsens", "aimyratio", "aimdeadzone", "aimcurve", "aimwindow", "aimtau", "aimrelease",
-		"colorsat", "colorvib", "colorcon", "colorbri", "colortemp", "colortint"
+		"haptics", "rumble", "padbackground", "colorsat", "colorvib", "colorcon", "colorbri", "colortemp", "colortint"
 	};
 
 	internal static readonly Dictionary<string, string> FieldLabels = new Dictionary<string, string>
@@ -58,6 +58,7 @@ internal static class StreamSettings
 		{ "mouseaim", "Mouse aim" }, { "aimsens", "Sensitivity" }, { "aimyratio", "Vertical ratio" },
 		{ "aimdeadzone", "Deadzone" }, { "aimcurve", "Curve" }, { "aimwindow", "Smoothing window" },
 		{ "aimtau", "Stop easing" }, { "aimrelease", "Release key" },
+		{ "haptics", "HD haptics strength" }, { "rumble", "Bluetooth rumble" }, { "padbackground", "Controller in background" },
 		{ "colorsat", "Saturation" }, { "colorvib", "Vibrance" }, { "colorcon", "Contrast" },
 		{ "colorbri", "Brightness" }, { "colortemp", "Temperature" }, { "colortint", "Tint" }
 	};
@@ -74,12 +75,18 @@ internal static class StreamSettings
 	};
 	internal static readonly Choice[] ScalingChoices =
 	{
-		new Choice("direct", "Direct, least processing"), new Choice("preset_default", "Default"), new Choice("preset_high_quality", "High quality (stock)"),
+		new Choice("direct", "Direct, least processing"), new Choice("preset_default", "Default"), new Choice("preset_high_quality", "High quality"),
+		new Choice("preset_high_quality_spatial", "High quality + FSRCNNX 8"), new Choice("preset_high_quality_advanced_spatial", "High quality + FSRCNNX 16"),
 		new Choice("nearest", "Nearest"), new Choice("bilinear", "Bilinear"), new Choice("bicubic", "Bicubic"),
 		new Choice("gaussian", "Gaussian"), new Choice("catmull_rom", "Catmull-Rom"),
 		new Choice("lanczos", "Lanczos"), new Choice("ewa_lanczos", "EWA Lanczos"), new Choice("ewa_lanczossharp", "EWA Lanczos sharp"),
 		new Choice("ewa_lanczos4sharpest", "EWA Lanczos 4 sharpest"), new Choice("fsr", "FSR"),
 		new Choice("fsrcnnx_x2_8_0_4_1", "FSRCNNX 8"), new Choice("fsrcnnx_x2_16_0_4_1", "FSRCNNX 16")
+	};
+	internal static readonly Choice[] RumbleChoices =
+	{
+		new Choice("Off", "Off"), new Choice("Very weak", "Very weak"), new Choice("Weak", "Weak"),
+		new Choice("Normal", "Normal"), new Choice("Strong", "Strong"), new Choice("Very Strong", "Very strong")
 	};
 	internal static readonly Choice[] MixerChoices =
 	{
@@ -348,6 +355,7 @@ internal static class StreamSettings
 		string resolution = null, rate = null, bitrate = null, codec = null, decoder = null, renderer = null, window = null, vsync = null, volume = null, buffer = null;
 		string kbEnabled = null, walkKey = null, walkScale = null, aimEnabled = null;
 		string aimSens = null, aimYRatio = null, aimDeadzone = null, aimCurve = null, aimWindow = null, aimTau = null, aimRelease = null;
+		string hapticOverride = null, rumbleIntensity = null, padBackground = null;
 		string colorSat = null, colorVib = null, colorCon = null, colorBri = null, colorTemp = null, colorTint = null;
 		using (RegistryKey s = Registry.CurrentUser.OpenSubKey(RegistryPath + @"\settings", false))
 		{
@@ -377,6 +385,9 @@ internal static class StreamSettings
 				aimWindow = Str(s.GetValue("mouse_aim_window_ms", null));
 				aimTau = Str(s.GetValue("mouse_aim_stop_tau_ms", null));
 				aimRelease = Str(s.GetValue("mouse_aim_release_key", null));
+				hapticOverride = Str(s.GetValue("haptic_override", null));
+				rumbleIntensity = Str(s.GetValue("rumble_haptics_intensity", null));
+				padBackground = Str(s.GetValue("allow_joystick_background_events", null));
 				colorSat = Str(s.GetValue("color_saturation", null));
 				colorVib = Str(s.GetValue("color_vibrance", null));
 				colorCon = Str(s.GetValue("color_contrast", null));
@@ -420,6 +431,10 @@ internal static class StreamSettings
 			saved["scaling"] = "preset_default";
 		else if (presetValue == "high_quality")
 			saved["scaling"] = "preset_high_quality";
+		else if (presetValue == "high_quality_spatial")
+			saved["scaling"] = "preset_high_quality_spatial";
+		else if (presetValue == "high_quality_advanced_spatial")
+			saved["scaling"] = "preset_high_quality_advanced_spatial";
 		else if (presetValue == "custom")
 		{
 			string upscaler = null;
@@ -455,6 +470,9 @@ internal static class StreamSettings
 		saved["aimwindow"] = ReadIntField(aimWindow, 2, 32, "8");
 		saved["aimtau"] = ReadIntField(aimTau, 0, 50, "4");
 		saved["aimrelease"] = KnownOrNative(AimReleaseChoices, aimRelease ?? "16777271");
+		saved["haptics"] = ReadPercentField(hapticOverride, 0.25, 2.0, "100");
+		saved["rumble"] = KnownOrNative(RumbleChoices, rumbleIntensity ?? "Normal");
+		saved["padbackground"] = ParseBool(padBackground, true) ? "true" : "false";
 		saved["colorsat"] = ReadPercentField(colorSat, 0.0, 2.0, "100");
 		saved["colorvib"] = ReadPercentField(colorVib, -1.0, 1.0, "0");
 		saved["colorcon"] = ReadPercentField(colorCon, 0.5, 2.0, "100");
@@ -515,15 +533,17 @@ internal static class StreamSettings
 		return value + " " + unit;
 	}
 
-	// Bitrates used by the upstream video profile presets, in kbps.
+	// Low-latency bitrates in kbps. They are intentionally above the old
+	// upstream floor: on this launcher low latency means avoiding extra queueing,
+	// not starving the encoder until compression artifacts become the problem.
 	internal static string DefaultBitrateForResolution(string resolution)
 	{
 		switch (resolution)
 		{
-			case "360p": return "1500";
-			case "540p": return "4000";
-			case "720p": return "8000";
-			case "1080p": return "12000";
+			case "360p": return "3000";
+			case "540p": return "8000";
+			case "720p": return "15000";
+			case "1080p": return "20000";
 			default: return null;
 		}
 	}
@@ -546,9 +566,17 @@ internal static class StreamSettings
 				case "mixer":
 				case "walkkey":
 				case "aimrelease":
+				case "rumble":
 					if (value.Length == 0)
 						return label + ": choose a value.";
 					break;
+				case "haptics":
+					{
+						double n;
+						if (!TryDouble(value, out n) || n < 25 || n > 200)
+							return "HD haptics strength: enter a percentage from 25 to 200.";
+						break;
+					}
 				case "walkscale":
 					{
 						double n;
@@ -709,6 +737,10 @@ internal static class StreamSettings
 							s.SetValue("placebo_preset", "default");
 						else if (value == "preset_high_quality")
 							s.SetValue("placebo_preset", "high_quality");
+						else if (value == "preset_high_quality_spatial")
+							s.SetValue("placebo_preset", "high_quality_spatial");
+						else if (value == "preset_high_quality_advanced_spatial")
+							s.SetValue("placebo_preset", "high_quality_advanced_spatial");
 						else
 						{
 							WritePlaceboUpscaler(value);
@@ -760,6 +792,15 @@ internal static class StreamSettings
 					case "aimrelease":
 						s.SetValue("mouse_aim_release_key", int.Parse(value, CultureInfo.InvariantCulture), RegistryValueKind.DWord);
 						break;
+					case "haptics":
+						s.SetValue("haptic_override", CanonicalScaled(value, 100.0));
+						break;
+					case "rumble":
+						s.SetValue("rumble_haptics_intensity", value);
+						break;
+					case "padbackground":
+						s.SetValue("allow_joystick_background_events", value);
+						break;
 					case "colorsat":
 						s.SetValue("color_saturation", CanonicalScaled(value, 100.0));
 						break;
@@ -780,6 +821,71 @@ internal static class StreamSettings
 						break;
 				}
 			}
+			WritePresetCompanionSettings(s, ui, changed);
+		}
+	}
+
+	private static void WritePresetCompanionSettings(RegistryKey s, Dictionary<string, string> ui, List<string> changed)
+	{
+		bool presetEdited = false;
+		foreach (string id in changed)
+			if (id == "resolution" || id == "rate" || id == "codec" || id == "decoder" || id == "renderer" || id == "scaling" || id == "mixer" || id == "bitrate" || id == "vsync" || id == "buffer")
+				presetEdited = true;
+		if (!presetEdited)
+			return;
+		string codec = ui["codec"];
+		if (ui["rate"] != "60" || (codec != "h265" && codec != "h265_hdr") || ui["mixer"] != "direct" || ui["decoder"] != "vulkan" || ui["renderer"] != "vulkan")
+			return;
+		string preset = null;
+		string bitrate = ui["bitrate"];
+		if (ui["scaling"] == "preset_high_quality" && ui["vsync"] == "false" && ui["buffer"] == "20" && bitrate == DefaultBitrateForResolution(ui["resolution"]))
+			preset = "lowlatency";
+		else if (ui["scaling"] == "ewa_lanczossharp" && ui["vsync"] == "true" && ui["buffer"] == "20" && bitrate == "32000")
+			preset = "balanced";
+		else if (ui["scaling"] == "ewa_lanczossharp" && ui["vsync"] == "true" && ui["buffer"] == "30" && bitrate == "45000")
+			preset = "cinema";
+		if (preset == null)
+			return;
+
+		s.SetValue("use_zero_copy", "true");
+		s.SetValue("vulkan_deferred_swap", "false");
+		s.SetValue("packet_loss_reported_max", "0.05");
+		s.SetValue("idr_on_fec_failure", preset == "cinema" ? "true" : "false");
+		s.SetValue("color_saturation", "1");
+		s.SetValue("color_contrast", "1");
+		s.SetValue("color_vibrance", "0");
+		s.SetValue("color_brightness", "0");
+		s.SetValue("color_temperature", "0");
+		s.SetValue("color_tint", "0");
+		if (preset != "lowlatency")
+			WritePlaceboQualityProfile(preset == "cinema");
+	}
+
+	private static void WritePlaceboQualityProfile(bool cinema)
+	{
+		using (RegistryKey p = Registry.CurrentUser.CreateSubKey(PlaceboPath, RegistryKeyPermissionCheck.ReadWriteSubTree))
+		{
+			p.SetValue("version", "0");
+			p.SetValue("upscaler", "ewa_lanczossharp");
+			p.SetValue("downscaler", "hermite");
+			p.SetValue("antiringing_strength", cinema ? "0.65" : "0.50");
+			p.SetValue("deband", "yes");
+			p.SetValue("deband_iterations", cinema ? "2" : "1");
+			p.SetValue("deband_threshold", cinema ? "3.5" : "3.0");
+			p.SetValue("deband_radius", "16.0");
+			p.SetValue("deband_grain", cinema ? "5.0" : "4.0");
+			p.SetValue("sigmoid", "yes");
+			p.SetValue("dither", "yes");
+			p.SetValue("dither_method", "blue");
+			p.SetValue("dither_lut_size", "6");
+			p.SetValue("deinterlace", "no");
+			p.SetValue("peak_detect", "yes");
+			p.SetValue("peak_detect_preset", "high_quality");
+			p.SetValue("peak_percentile", "99.995");
+			p.SetValue("allow_delayed_peak", "no");
+			p.SetValue("color_map", "yes");
+			p.SetValue("color_map_preset", "high_quality");
+			p.SetValue("contrast_recovery", "0.30");
 		}
 	}
 
