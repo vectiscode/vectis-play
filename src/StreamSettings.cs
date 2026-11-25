@@ -840,9 +840,9 @@ internal static class StreamSettings
 		string bitrate = ui["bitrate"];
 		if (ui["scaling"] == "preset_high_quality" && ui["vsync"] == "false" && ui["buffer"] == "20" && bitrate == DefaultBitrateForResolution(ui["resolution"]))
 			preset = "lowlatency";
-		else if (ui["scaling"] == "ewa_lanczossharp" && ui["vsync"] == "true" && ui["buffer"] == "20" && bitrate == "32000")
+		else if (ui["scaling"] == "ewa_lanczossharp" && ui["vsync"] == "false" && ui["buffer"] == "20" && bitrate == "32000")
 			preset = "balanced";
-		else if (ui["scaling"] == "ewa_lanczossharp" && ui["vsync"] == "true" && ui["buffer"] == "30" && bitrate == "45000")
+		else if (ui["scaling"] == "ewa_lanczossharp" && ui["vsync"] == "false" && ui["buffer"] == "30" && bitrate == "45000")
 			preset = "cinema";
 		if (preset == null)
 			return;

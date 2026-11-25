@@ -30,7 +30,7 @@ internal sealed class Controller : IDisposable
 	{
 		new Choice("lowlatency", "Low latency"),
 		new Choice("balanced", "Balanced"),
-		new Choice("cinema", "Cinema / Quality")
+		new Choice("cinema", "Cinema")
 	};
 	private static readonly Choice[] SimpleQualityChoices =
 	{
@@ -511,9 +511,9 @@ internal sealed class Controller : IDisposable
 		string buffer = _audioBuffer.Text.Trim();
 		if (scaling == "preset_high_quality" && _vsync.IsChecked != true && buffer == "20" && bitrate == StreamSettings.DefaultBitrateForResolution(ComboValue(_resolution)))
 			return "lowlatency";
-		if (scaling == "ewa_lanczossharp" && _vsync.IsChecked == true && buffer == "20" && bitrate == "32000")
+		if (scaling == "ewa_lanczossharp" && _vsync.IsChecked != true && buffer == "20" && bitrate == "32000")
 			return "balanced";
-		if (scaling == "ewa_lanczossharp" && _vsync.IsChecked == true && buffer == "30" && bitrate == "45000")
+		if (scaling == "ewa_lanczossharp" && _vsync.IsChecked != true && buffer == "30" && bitrate == "45000")
 			return "cinema";
 		return "custom";
 	}
@@ -576,14 +576,14 @@ internal sealed class Controller : IDisposable
 			else if (preset == "balanced")
 			{
 				SelectComboValue(_scaling, "ewa_lanczossharp");
-				_vsync.IsChecked = true;
+				_vsync.IsChecked = false;
 				_audioBuffer.Text = "20";
 				_bitrate.Text = "32000";
 			}
 			else
 			{
 				SelectComboValue(_scaling, "ewa_lanczossharp");
-				_vsync.IsChecked = true;
+				_vsync.IsChecked = false;
 				_audioBuffer.Text = "30";
 				_bitrate.Text = "45000";
 			}

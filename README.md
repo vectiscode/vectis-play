@@ -57,8 +57,8 @@ Mouse sensitivity changes how quickly the virtual stick reaches full deflection.
 The simple view has three stream presets. All use 60 fps stream mode, H.265, Vulkan decode and render, direct frame mapping and no frame interpolation:
 
 - **Low latency**: quality scaling, VSync off, 20 ms audio buffer, 20000 kbps at 1080p or 15000 kbps at 720p
-- **Balanced**: tuned EWA Lanczos sharp scaling, debanding, dithering, VSync on, 20 ms audio buffer, 32000 kbps
-- **Cinema / Quality**: stronger debanding and anti-ringing, VSync on, 30 ms audio buffer, 45000 kbps and clean keyframe recovery after unrecoverable packet loss
+- **Balanced**: tuned EWA Lanczos sharp scaling, debanding, dithering, VSync off, 20 ms audio buffer, 32000 kbps
+- **Cinema**: stronger debanding and anti-ringing, VSync off, 30 ms audio buffer, 45000 kbps and clean keyframe recovery after unrecoverable packet loss
 
 The 5% packet-loss reporting ceiling avoids unnecessary resolution and bitrate reduction during small Wi-Fi spikes. On genuinely unstable Wi-Fi this can mean more visible compression artifacts; use the network check and lower the bitrate if needed.
 
